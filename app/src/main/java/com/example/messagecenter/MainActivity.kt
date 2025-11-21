@@ -6,6 +6,7 @@
 
 package com.example.messagecenter
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -24,6 +25,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -31,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
 
 import com.example.messagecenter.ui.theme.MessageCenterTheme
 
@@ -48,29 +53,37 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
 @Preview(showBackground = true, device = "spec:width=411dp,height=891dp")
 @Composable
 fun MessageCenterApp() {
-    var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
-    MessageCenterTheme {
-        NavigationSuiteScaffold(
-            navigationSuiteItems = {
-                AppDestinations.entries.forEach {
-                    item(
+    var selectIndex by rememberSaveable { mutableStateOf(0) }
+    val lableList = AppDestinations.entries.map { it.label }
+    val labels = AppDestinations.entries.map { it.icon }
+    Scaffold(
+        bottomBar = {
+            NavigationBar{
+                lableList.forEachIndexed { index, string ->
+                    NavigationBarItem(
                         icon = {
                             Icon(
-                                it.icon,
-                                contentDescription = it.label
+                                imageVector = labels[index],
+                                contentDescription = null
                             )
                         },
-                        label = { Text(it.label) },
-                        selected = it == currentDestination,
-                        onClick = { currentDestination = it }
+                        label = { Text(string) },
+                        selected = selectIndex == index,
+                        onClick = { selectIndex = index }
                     )
                 }
             }
-        ) {
-            MainScreen(currentDestination)
+        },
+    ) {
+        when (selectIndex) {
+            0 -> Text("HOME Screen", style = MaterialTheme.typography.displayMedium, modifier = Modifier.padding(it))
+            1 -> MessagePage()
+            2 -> Text("PROFILE Screen", style = MaterialTheme.typography.displayMedium)
+            else -> Text("HOME Screen", style = MaterialTheme.typography.displayMedium)
         }
     }
 }
@@ -82,22 +95,6 @@ enum class AppDestinations(
     HOME("主页", Icons.Default.Home),
     MESSAGE("消息", Icons.Default.Email),
     PROFILE("我的", Icons.Default.AccountBox),
-}
-
-@Composable
-fun MainScreen(currentDestination: AppDestinations) {
-
-    when (currentDestination) {
-        AppDestinations.HOME -> {
-            Text("Home Screen", style = MaterialTheme.typography.displayMedium)
-        }
-        AppDestinations.MESSAGE -> {
-            MessagePage()
-        }
-        AppDestinations.PROFILE -> {
-            Text("PROFILE Screen", style = MaterialTheme.typography.displayMedium)
-        }
-    }
 }
 
 
