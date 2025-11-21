@@ -4,10 +4,10 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 
 data class MessagePreview(
-    val id: String,
-    val senderName: Int,
-//    val senderSureName: String?,
-    val senderAvatar: String,
+    val id: Int,
+    val contactName: Int,
+    val contactSureName: String?,
+    val contactAvatar: String,
 //    val isFromSystem : Boolean,
     val previewText: Int,
     val timestamp: Long,
@@ -15,6 +15,5 @@ data class MessagePreview(
 //    val isMuted: Boolean = false,
 //    val unReadNum: Int = 0,
 //    val hasPinned: Boolean = false,
-
 )
 
