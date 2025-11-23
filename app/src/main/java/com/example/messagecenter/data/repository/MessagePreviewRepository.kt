@@ -8,26 +8,27 @@ import androidx.room.Update
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 import android.content.Context
+import android.util.Log
 import androidx.room.Database
 import androidx.room.OnConflictStrategy
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-import com.example.messagecenter.data.model.MessagePreview
 
 @Entity(tableName = "contacts")
 data class  ContactEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val contactName: Int,
+    val contactId: Int,
+    val contactName: String,
     val contactSureName: String?,
     val contactAvatar: String,
-//    val isFromSystem : Boolean,
-    val previewText: Int,
+    val isFromSystem : Boolean,
+    val previewText: String,
     val timestamp: Long,
-//    val isRead: Boolean = false,
+    val isRead: Boolean = false,
 //    val isMuted: Boolean = false,
-//    val unReadNum: Int = 0,
+    val unReadNum: Int = 0,
 //    val hasPinned: Boolean = false,
 )
 
@@ -43,11 +44,11 @@ interface ContactEntityDao {
     @Update
     suspend fun update(contactEntity: ContactEntity)
 
-    @Query("DELETE FROM contacts WHERE id = contactId")
+    @Query("DELETE FROM contacts WHERE contactId = :contactId")
     suspend fun delete(contactId: Int)
 
-    @Query("SELECT * FROM contacts ORDER BY timestamp DESC LIMIT startNum OFFSET groupNum")
-    fun getMoreContacts(startNum : Int, groupNum : Int): Flow<List<ContactEntity>>
+    @Query("SELECT * FROM contacts ORDER BY timestamp DESC LIMIT :groupNum OFFSET :startNum")
+    suspend fun getMoreContacts(startNum : Int, groupNum : Int): List<ContactEntity>
 }
 
 @Database(entities = [ContactEntity::class], version = 1, exportSchema = false)
@@ -70,47 +71,33 @@ abstract class ContactsDatabase : RoomDatabase() {
 
 
 
-class MessageRepository private constructor(
+class ContactRepository(
     private val contactEntityDao: ContactEntityDao,
 ) {
-    suspend fun insertContact(messagePreview: MessagePreview) {
-        contactEntityDao.insert(toContactEntity(messagePreview))
+    suspend fun insertContact(contactEntity: ContactEntity) {
+        contactEntityDao.insert(contactEntity)
     }
 
-    suspend fun insertContacts(contacts: List<MessagePreview>) {
-        contactEntityDao.insertContacts(contacts.map { toContactEntity(it) })
+    suspend fun insertContacts(contacts: List<ContactEntity>) {
+        contactEntityDao.insertContacts(contacts)
     }
 
-    suspend fun updateContact(messagePreview: MessagePreview) {
-        contactEntityDao.update(toContactEntity(messagePreview))
+    suspend fun updateContact(contactEntity: ContactEntity) {
+        contactEntityDao.update(contactEntity)
     }
 
     suspend fun deleteContact(contactId: Int) {
         contactEntityDao.delete(contactId)
     }
-    suspend fun getMoreContacts(startNum : Int, groupNum : Int) : Flow<List<ContactEntity>> {
-        return contactEntityDao.getMoreContacts(startNum, groupNum)
-    }
-
-    private fun toContactEntity(messagePreview: MessagePreview): ContactEntity {
-        return ContactEntity(
-            id = messagePreview.id,
-            contactName = messagePreview.contactName,
-            contactSureName = messagePreview.contactSureName,
-            contactAvatar = messagePreview.contactAvatar,
-            previewText = messagePreview.previewText,
-            timestamp = messagePreview.timestamp
-        )
-    }
-    private fun toMessagePreview(contactEntity: ContactEntity): MessagePreview {
-        return MessagePreview(
-            id = contactEntity.id,
-            contactName = contactEntity.contactName,
-            contactSureName = contactEntity.contactSureName,
-            contactAvatar = contactEntity.contactAvatar,
-            previewText = contactEntity.previewText,
-            timestamp = contactEntity.timestamp
-        )
+    suspend fun getMoreContacts(startNum: Int, groupNum: Int): Result<List<ContactEntity>> {
+        return try {
+            val contacts = contactEntityDao.getMoreContacts(startNum, groupNum)
+            Log.d("ContactRepository", "Fetched ${contacts.size} contacts")
+            Result.success(contacts)
+        } catch (e: Exception) {
+            Log.e("ContactRepository", "Error fetching contacts: ${e.message}")
+            Result.failure(e)
+        }
     }
     // 标记消息为已读
 //    suspend fun markAsRead(messageId: String) {

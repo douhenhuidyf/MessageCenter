@@ -1,5 +1,6 @@
 package com.example.messagecenter.data.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -7,9 +8,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-
-import com.example.messagecenter.data.model.MessagePreview
-import com.example.messagecenter.data.repository.MessagePreviewRepository
+import com.example.messagecenter.data.repository.ContactEntity
+import com.example.messagecenter.data.repository.ContactRepository
 
 /*
 1.spilt page data loading
@@ -23,12 +23,12 @@ TODO:
 
 sealed class MessageUiState {
     object Loading : MessageUiState()
-    data class Success(val messages: List<MessagePreview>, val hasMore: Boolean) : MessageUiState()
+    data class Success(val contacts: List<ContactEntity>, val hasMore: Boolean) : MessageUiState()
     data class Error(val exception: Throwable) : MessageUiState()
 }
 
-class MessagePreviewViewModel(
-    private val messagePreviewRepository: MessagePreviewRepository
+class ContactViewModel(
+    private val contactRepository: ContactRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<MessageUiState>(MessageUiState.Loading)
 
@@ -53,18 +53,18 @@ class MessagePreviewViewModel(
                 _uiState.value = MessageUiState.Loading
             }
 
-            val result = messagePreviewRepository.getMessagePreviews(currentPage, pageSize)
-            isLoading = false
-            result.onSuccess { messages ->
-                val hasMore = messages.size == pageSize
+            val result = contactRepository.getMoreContacts((currentPage - 1) * pageSize, pageSize)
+
+            result.onSuccess { contacts ->
+                val hasMore = contacts.size == pageSize
                 if (refresh || currentPage == 1) {
-                    _uiState.value = MessageUiState.Success(messages, hasMore)
+                    _uiState.value = MessageUiState.Success(contacts, hasMore)
                 } else {
-                    val currentMessages = when (val state = _uiState.value) {
-                        is MessageUiState.Success -> state.messages
+                    val currentContacts = when (val state = _uiState.value) {
+                        is MessageUiState.Success -> state.contacts
                         else -> emptyList()
                     }
-                    _uiState.value = MessageUiState.Success(currentMessages + messages, hasMore)
+                    _uiState.value = MessageUiState.Success(currentContacts + contacts, hasMore)
                 }
                 if (hasMore) {
                     currentPage++
@@ -72,14 +72,15 @@ class MessagePreviewViewModel(
             }.onFailure { exception ->
                 _uiState.value = MessageUiState.Error(exception)
             }
+            isLoading = false
         }
     }
 
-    fun refreshMessagePreview() {
+    fun refreshContact() {
         loadMessages(refresh = true)
     }
 
-    fun loadMoreMessagePreview() {
+    fun loadMoreContact() {
         val currentState = _uiState.value
         if (currentState is MessageUiState.Success && currentState.hasMore) {
             loadMessages()
