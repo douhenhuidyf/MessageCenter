@@ -36,7 +36,10 @@ data class  ContactEntity(
 @Dao
 interface ContactEntityDao {
     @Query("SELECT COUNT(*) FROM contacts")
-    suspend fun getCount(): Int
+    fun getCount(): Flow<Int>
+    
+    @Query("SELECT COUNT(*) FROM contacts")
+    suspend fun getContactCount(): Int
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(contactEntity: ContactEntity)
@@ -82,10 +85,12 @@ abstract class ContactsDatabase : RoomDatabase() {
 class ContactRepository(
     private val contactEntityDao: ContactEntityDao,
 ) {
-    suspend fun getContactCount(): Int = withContext(Dispatchers.IO) {
-        contactEntityDao.getCount()
-    }
+    fun getContactCountFlow(): Flow<Int> = contactEntityDao.getCount()
 
+    suspend fun getContactCount(): Int{
+        return contactEntityDao.getContactCount()
+    }
+    
     suspend fun insertContact(contactEntity: ContactEntity) {
         contactEntityDao.insert(contactEntity)
     }

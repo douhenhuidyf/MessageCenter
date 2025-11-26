@@ -18,7 +18,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -34,12 +33,10 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
-import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.messagecenter.Destination
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -62,19 +59,17 @@ fun MessageScreen(
     var availableContacts by remember { mutableStateOf<List<ContactEntity>>(emptyList()) }
     var availableHasMore by remember { mutableStateOf(false) }
 
-    LaunchedEffect(uiState) {
-        if (uiState is MessageUiState.Success) {
-            val successState = uiState as MessageUiState.Success
-            availableContacts = successState.contacts
-            availableHasMore = successState.hasMore
-        }
+    if (uiState is MessageUiState.Success) {
+        val successState = uiState as MessageUiState.Success
+        availableContacts = successState.contacts
+        availableHasMore = successState.hasMore
     }
 
     Scaffold(
         topBar = { MessagePageTopBar() },
         modifier = modifier
             .fillMaxSize()
-            .padding(8.dp)
+            .padding(horizontal = 8.dp)
     ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
             MessagePreviewFlow(
@@ -90,7 +85,13 @@ fun MessageScreen(
                 deleteContact = viewModel::deleteContact
             )
             when (uiState) {
-                is MessageUiState.Loading -> {}
+                is MessageUiState.Loading -> {
+                    Toast.makeText(
+                        LocalContext.current,
+                        "Loading...",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
                 is MessageUiState.Error -> {
                     val errorState = uiState as MessageUiState.Error
                     Toast.makeText(
@@ -99,7 +100,6 @@ fun MessageScreen(
                         Toast.LENGTH_SHORT
                     ).show()
                 }
-
                 else -> {}
             }
         }
@@ -155,7 +155,7 @@ fun MessagePreviewFlow(
                 if (hasMore) {
                     val lastVisibleIndex = visibleItems.lastOrNull()?.index ?: 0
                     val totalItems = contacts.size
-                    if (lastVisibleIndex >= totalItems - 5) {
+                    if (lastVisibleIndex >= totalItems - 10) {
                         Log.d(
                             "MessagePreviewFlow",
                             "Loading more contacts, lastVisibleIndex: $lastVisibleIndex, totalItems: $totalItems"
@@ -190,8 +190,7 @@ fun MessagePreviewFlow(
 //@Preview(showBackground = true)
 //@Composable
 //fun MessageScreenPreview() {
-//
-//    val contact = ContactEntity(
+//    MessageCenterTheme() {val contact = ContactEntity(
 //        id = 0,
 //        contactId = 1,
 //        contactName = "Test Contact",
@@ -203,5 +202,6 @@ fun MessagePreviewFlow(
 //        isRead = false,
 //        unReadNum = 191
 //    )
-//    MessagePreviewCell(navController = navController, contactEntity = contact)
+//        MessagePreviewCell(navController = navController, contactEntity = contact) }
+//
 //}

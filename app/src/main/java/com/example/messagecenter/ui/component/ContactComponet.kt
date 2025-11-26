@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 fun ContactSettingCell(icon: ImageVector, text: String, onClick: () -> Unit ,modifier: Modifier = Modifier){
     Surface(
         modifier = Modifier.width(100.dp),
-        color = MaterialTheme.colorScheme.background,
+        color = MaterialTheme.colorScheme.primaryContainer,
         shape = RoundedCornerShape(8.dp),
         onClick = { onClick() }
     ) {

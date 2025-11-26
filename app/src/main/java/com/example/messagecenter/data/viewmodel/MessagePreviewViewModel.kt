@@ -12,17 +12,15 @@ import com.example.messagecenter.data.repository.ContactEntity
 import com.example.messagecenter.data.repository.ContactRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 /*
-1.spilt page data loading
-2.ui state management
-
 TODO:
-2.delete message
- */
+1.delete message
+*/
 
 
 sealed class MessageUiState {
@@ -36,41 +34,43 @@ class ContactViewModel(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<MessageUiState>(MessageUiState.Loading)
     
-    private var contactSize = 0
-    private val pageSize = 20
-
-    private var isLoading = false
-    private val loadSize = MutableStateFlow(20)
-
-    init{
-        viewModelScope.launch{
-            contactSize = contactRepository.getContactCount()
-        }
-    }
-
-    val uiState: StateFlow<MessageUiState> = loadSize
-        .flatMapLatest { limit ->
-            contactRepository.getContactsStream(limit)
-        }
-        .map { contacts ->
-            val hasMore = contacts.size < contactSize
-            MessageUiState.Success(contacts, hasMore = hasMore)
-        }
+    private var contactSize = contactRepository.getContactCountFlow()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = MessageUiState.Loading
+            initialValue = 0
         )
+    private val pageSize = 20
+
+    private val loadSize = MutableStateFlow(20)
+    private val refreshTrigger = MutableStateFlow(0)
+
+    val uiState: StateFlow<MessageUiState> = combine(
+        loadSize.flatMapLatest { limit ->
+            contactRepository.getContactsStream(limit)
+        },
+        contactSize,
+        refreshTrigger
+    ) { contacts, totalCount, _ ->
+        val hasMore = contacts.size < totalCount
+        MessageUiState.Success(contacts, hasMore = hasMore)
+    }
+    .stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = MessageUiState.Loading
+    )
 
     fun refreshContact() {
         viewModelScope.launch{
-            contactSize = contactRepository.getContactCount()
+            Log.d("ContactViewModel", "refreshContact")
             loadSize.value = pageSize
+            refreshTrigger.value += 1
         }
     }
 
     fun loadMoreContact() {
-        if (loadSize.value < contactSize) {
+        if (loadSize.value < contactSize.value) {
             loadSize.value += pageSize
         }
     }
@@ -84,7 +84,6 @@ class ContactViewModel(
     fun deleteContact(contactId: Int) {
         viewModelScope.launch {
             contactRepository.deleteContact(contactId)
-            contactSize = contactRepository.getContactCount()
         }
     }
 }

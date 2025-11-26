@@ -7,6 +7,7 @@
 package com.example.messagecenter.ui.component
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -106,7 +107,6 @@ fun MessagePreviewCell(
     modifier: Modifier = Modifier,
 ) {
     val timestampString = timestampToString(contactEntity.timestamp)
-    val encodedAvatar = URLEncoder.encode(contactEntity.contactAvatar, StandardCharsets.UTF_8.toString())
     Row(
         modifier = modifier
             .padding(8.dp)
@@ -114,11 +114,7 @@ fun MessagePreviewCell(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = {
-                    var route =
-                        "conversation/${contactEntity.contactId}/${contactEntity.contactName}/$encodedAvatar"
-                    if (!contactEntity.contactSureName.isNullOrEmpty()) {
-                        route += "?contactSureName=${contactEntity.contactSureName}"
-                    }
+                    val route = "conversation/${contactEntity.contactId}"
                     Log.d(
                         "MessagePreviewCell",
                         "跳转到对话页: ${contactEntity.contactName} - ${contactEntity.contactId} "
@@ -165,7 +161,7 @@ fun MessagePreviewCell(
                 }
                 Text(
                     text = timestampString,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -207,6 +203,7 @@ fun MessagePreviewCell(
 
 @Composable
 fun MessagePageTopBar(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -214,17 +211,41 @@ fun MessagePageTopBar(modifier: Modifier = Modifier) {
             .padding(bottom = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Image(imageVector = Icons.Default.Menu,
+        Image(
+            imageVector = Icons.Default.Menu,
             contentDescription = null,
-            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground)
+            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground),
+            modifier = Modifier.clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = {
+                    Toast.makeText(
+                        context,
+                        "功能暂未实现",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            )
         )
         Text("消息",
             style = MaterialTheme.typography.displayMedium,
             color = MaterialTheme.colorScheme.onBackground
         )
-        Image(imageVector = Icons.Default.Search,
+        Image(
+            imageVector = Icons.Default.Search,
             contentDescription = null,
-            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground)
+            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground),
+            modifier = Modifier.clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = {
+                    Toast.makeText(
+                        context,
+                        "功能暂未实现",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            )
         )
     }
 }

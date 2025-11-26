@@ -62,7 +62,6 @@ import com.example.messagecenter.data.viewmodel.ContactDetailViewModel
 
 @Composable
 fun ContactScreen(
-    contactId: Int,
     navController: NavController,
     viewModel : ContactDetailViewModel = viewModel(factory = AppViewModelProvider.Factory),
     modifier: Modifier = Modifier
@@ -81,19 +80,18 @@ fun ContactScreen(
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
-            .padding(8.dp),
+            .padding(horizontal = 8.dp),
         topBar = {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .statusBarsPadding()
-                    .background(Color(0xFFF5F5F5)),
+                    .statusBarsPadding(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                     contentDescription = null,
-                    Modifier.clickable(
+                    modifier = Modifier.clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                         onClick = {
@@ -112,8 +110,7 @@ fun ContactScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(paddingValues)
-                .padding(bottom = 8.dp)
-                .background(Color(0xFFF5F5F5)),
+                .padding(bottom = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -131,9 +128,17 @@ fun ContactScreen(
                     .padding(top = 16.dp)
                     .fillMaxWidth()
             ) {
-                ContactSettingCell(icon = Icons.Default.Settings, text = "更多设置", onClick = {})
+                ContactSettingCell(icon = Icons.Default.Settings, text = "关注", onClick = {})
                 ContactSettingCell(icon = Icons.Default.Notifications, text = "免打扰", onClick = {})
-                ContactSettingCell(icon = Icons.Default.Settings, text = "更多设置", onClick = { showSureNameEdit = true})
+                ContactSettingCell(
+                    icon = Icons.Default.Settings,
+                    text = "更多设置",
+                    onClick = {
+                        editedName = showName
+                        showSureNameEdit = true
+
+                    }
+                )
             }
         }
         if (showSureNameEdit) {
@@ -255,16 +260,16 @@ fun editSureNameDialog(
 //
 //}
 
-@Preview(
-    showBackground = true,
-    showSystemUi = true,
-    device = Devices.PIXEL_4
-)
-@Composable
-fun ContactScreenPreview() {
-    MessageCenterTheme{
-        val NavController = rememberNavController()
-        ContactScreen(1,  NavController)
-    }
-
-}
+//@Preview(
+//    showBackground = true,
+//    showSystemUi = true,
+//    device = Devices.PIXEL_4
+//)
+//@Composable
+//fun ContactScreenPreview() {
+//    MessageCenterTheme{
+//        val NavController = rememberNavController()
+//        ContactScreen(1,  NavController)
+//    }
+//
+//}
