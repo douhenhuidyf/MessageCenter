@@ -10,13 +10,17 @@ import kotlinx.coroutines.launch
 
 import com.example.messagecenter.data.repository.ContactEntity
 import com.example.messagecenter.data.repository.ContactRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 /*
 1.spilt page data loading
 2.ui state management
 
 TODO:
-1.refresh page
 2.delete message
  */
 
@@ -31,59 +35,56 @@ class ContactViewModel(
     private val contactRepository: ContactRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<MessageUiState>(MessageUiState.Loading)
+    
+    private var contactSize = 0
+    private val pageSize = 20
 
-    val uiState: StateFlow<MessageUiState> = _uiState.asStateFlow()
-
-    private var currentPage = 1
-    private val pageSize = 30
     private var isLoading = false
+    private val loadSize = MutableStateFlow(20)
 
-    init {
-        loadMessages()
-    }
-
-    fun loadMessages(refresh : Boolean = false) {
-        if (isLoading) return
-
-        viewModelScope.launch {
-            isLoading = true
-
-            if (refresh) {
-                currentPage = 1
-                _uiState.value = MessageUiState.Loading
-            }
-
-            val result = contactRepository.getMoreContacts((currentPage - 1) * pageSize, pageSize)
-
-            result.onSuccess { contacts ->
-                val hasMore = contacts.size == pageSize
-                if (refresh || currentPage == 1) {
-                    _uiState.value = MessageUiState.Success(contacts, hasMore)
-                } else {
-                    val currentContacts = when (val state = _uiState.value) {
-                        is MessageUiState.Success -> state.contacts
-                        else -> emptyList()
-                    }
-                    _uiState.value = MessageUiState.Success(currentContacts + contacts, hasMore)
-                }
-                if (hasMore) {
-                    currentPage++
-                }
-            }.onFailure { exception ->
-                _uiState.value = MessageUiState.Error(exception)
-            }
-            isLoading = false
+    init{
+        viewModelScope.launch{
+            contactSize = contactRepository.getContactCount()
         }
     }
 
+    val uiState: StateFlow<MessageUiState> = loadSize
+        .flatMapLatest { limit ->
+            contactRepository.getContactsStream(limit)
+        }
+        .map { contacts ->
+            val hasMore = contacts.size < contactSize
+            MessageUiState.Success(contacts, hasMore = hasMore)
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = MessageUiState.Loading
+        )
+
     fun refreshContact() {
-        loadMessages(refresh = true)
+        viewModelScope.launch{
+            contactSize = contactRepository.getContactCount()
+            loadSize.value = pageSize
+        }
     }
 
     fun loadMoreContact() {
-        val currentState = _uiState.value
-        if (currentState is MessageUiState.Success && currentState.hasMore) {
-            loadMessages()
+        if (loadSize.value < contactSize) {
+            loadSize.value += pageSize
+        }
+    }
+
+    fun markAsRead(contactId: Int) {
+        viewModelScope.launch {
+            contactRepository.markAsRead(contactId)
+        }
+    }
+
+    fun deleteContact(contactId: Int) {
+        viewModelScope.launch {
+            contactRepository.deleteContact(contactId)
+            contactSize = contactRepository.getContactCount()
         }
     }
 }

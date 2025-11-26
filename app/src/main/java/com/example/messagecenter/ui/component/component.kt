@@ -6,7 +6,10 @@
 
 package com.example.messagecenter.ui.component
 
-import android.graphics.Bitmap
+import android.util.Log
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -16,6 +19,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,6 +29,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.icons.Icons
@@ -38,43 +44,89 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.navigation.NavController
+import androidx.navigation.NavOptions
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.example.messagecenter.R
 import java.io.File
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 import com.example.messagecenter.data.repository.ContactEntity
 import com.example.messagecenter.utils.timestampToString
 
 @Composable
-fun Avatar(avatarPath: String, modifier: Modifier = Modifier){
-    AsyncImage(
-        model = ImageRequest.Builder(LocalContext.current)
-            .data(File(avatarPath))
-//            .data(R.drawable.avatar)
-            .crossfade(true)
-            .size(100, 100)
-            .build(),
-        contentDescription = null,
-        modifier = modifier
-            .size(55.dp)
-            .clip(CircleShape),
-        contentScale = ContentScale.Crop
-    )
+fun Avatar(avatarPath: String,  modifier: Modifier = Modifier, size: Dp = 55.dp){
+    if (avatarPath.isEmpty()) {
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(R.drawable.avatar)
+                .crossfade(true)
+                .size(100, 100)
+                .build(),
+            contentDescription = null,
+            modifier = modifier
+                .size(size)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
+        return
+    }
+    else{
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(File(avatarPath))
+                .crossfade(true)
+                .size(100, 100)
+                .build(),
+            contentDescription = null,
+            modifier = modifier
+                .size(size)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
+    }
 }
 
 @Composable
-fun MessagePreviewCell(contactEntity: ContactEntity, modifier: Modifier = Modifier) {
+fun MessagePreviewCell(
+    markAsRead: (Int) -> Unit,
+    deleteContact: (Int) -> Unit,
+    navController: NavController,
+    contactEntity: ContactEntity,
+    modifier: Modifier = Modifier,
+) {
     val timestampString = timestampToString(contactEntity.timestamp)
+    val encodedAvatar = URLEncoder.encode(contactEntity.contactAvatar, StandardCharsets.UTF_8.toString())
     Row(
         modifier = modifier
-            .padding(8.dp),
+            .padding(8.dp)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = {
+                    var route =
+                        "conversation/${contactEntity.contactId}/${contactEntity.contactName}/$encodedAvatar"
+                    if (!contactEntity.contactSureName.isNullOrEmpty()) {
+                        route += "?contactSureName=${contactEntity.contactSureName}"
+                    }
+                    Log.d(
+                        "MessagePreviewCell",
+                        "跳转到对话页: ${contactEntity.contactName} - ${contactEntity.contactId} "
+                    )
+                    navController.navigate(route)
+                    markAsRead(contactEntity.contactId)
+                }
+            ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Avatar(avatarPath = contactEntity.contactAvatar)
@@ -85,7 +137,6 @@ fun MessagePreviewCell(contactEntity: ContactEntity, modifier: Modifier = Modifi
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-//                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 val contactName = if (contactEntity.contactSureName.isNullOrEmpty()) {
@@ -156,37 +207,26 @@ fun MessagePreviewCell(contactEntity: ContactEntity, modifier: Modifier = Modifi
 
 @Composable
 fun MessagePageTopBar(modifier: Modifier = Modifier) {
-    CenterAlignedTopAppBar(
-        title = {
-            Row(
-                modifier = modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Image(imageVector = Icons.Default.Menu,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .wrapContentHeight(Alignment.CenterVertically),
-                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground)
-                )
-                Text("消息",
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .wrapContentHeight(Alignment.CenterVertically),
-                    style = MaterialTheme.typography.displayMedium,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Image(imageVector = Icons.Default.Search,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .wrapContentHeight(Alignment.CenterVertically),
-                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground)
-                )
-            }
-        },
+    Row(
         modifier = modifier
-    )
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(bottom = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Image(imageVector = Icons.Default.Menu,
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground)
+        )
+        Text("消息",
+            style = MaterialTheme.typography.displayMedium,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Image(imageVector = Icons.Default.Search,
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground)
+        )
+    }
 }
 
 
