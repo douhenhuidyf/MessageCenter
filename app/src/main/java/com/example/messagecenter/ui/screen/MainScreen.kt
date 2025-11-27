@@ -19,10 +19,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 
-import com.example.messagecenter.data.viewmodel.AppViewModelProvider
 import com.example.messagecenter.data.viewmodel.ContactViewModel
 import com.example.messagecenter.navigation.Destination
 

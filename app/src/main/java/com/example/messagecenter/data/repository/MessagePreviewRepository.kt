@@ -30,7 +30,7 @@ data class  ContactEntity(
     val timestamp: Long,
 //    val isMuted: Boolean = false,
     val unReadNum: Int = 0,
-//    val hasPinned: Boolean = false,
+//    val isPinned: Boolean = false,
 )
 
 @Dao

@@ -52,8 +52,12 @@ class ContactViewModel(
         contactSize,
         refreshTrigger
     ) { contacts, totalCount, _ ->
-        val hasMore = contacts.size < totalCount
-        MessageUiState.Success(contacts, hasMore = hasMore)
+        if (contacts.isEmpty() && totalCount == 0) {
+            MessageUiState.Error(Exception("错误:无数据"))
+        } else {
+            val hasMore = contacts.size < totalCount
+            MessageUiState.Success(contacts, hasMore = hasMore)
+        }
     }
     .stateIn(
         scope = viewModelScope,
@@ -70,6 +74,7 @@ class ContactViewModel(
     }
 
     fun loadMoreContact() {
+        Log.d("ContactViewModel", "loadMore: loadSize=${loadSize.value}, total=${contactSize.value}")
         if (loadSize.value < contactSize.value) {
             loadSize.value += pageSize
         }

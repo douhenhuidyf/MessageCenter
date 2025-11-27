@@ -79,13 +79,13 @@ fun ContactScreen(
 
     Scaffold(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 8.dp),
+            .fillMaxSize(),
         topBar = {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .statusBarsPadding(),
+                    .statusBarsPadding()
+                    .padding(horizontal = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Icon(

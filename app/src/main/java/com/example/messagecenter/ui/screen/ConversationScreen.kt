@@ -45,8 +45,7 @@ fun ConversationScreen(
     }
     Scaffold(
         modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 8.dp),
+            .fillMaxSize(),
         topBar = {
             Row(
                 modifier = Modifier

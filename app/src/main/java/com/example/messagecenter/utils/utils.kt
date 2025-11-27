@@ -1,5 +1,7 @@
 package com.example.messagecenter.utils
 
+import java.text.SimpleDateFormat
+
 fun timestampToString(timestamp: Long): String {
     val nowTime = System.currentTimeMillis()
     val difference = nowTime - timestamp
@@ -17,7 +19,7 @@ fun timestampToString(timestamp: Long): String {
         difference < sevenDays -> timeString = "${difference / oneDay}天前"
         else -> {
             val date = java.util.Date(timestamp)
-            val dateFormat = java.text.SimpleDateFormat("MM-dd")
+            val dateFormat = SimpleDateFormat("YY-MM-dd")
             timeString = dateFormat.format(date)
         }
     }

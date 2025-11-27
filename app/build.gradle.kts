@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp")
+    kotlin("plugin.serialization")
 }
 
 android {
@@ -70,4 +71,5 @@ dependencies {
     implementation("io.coil-kt.coil3:coil-compose:3.3.0")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.3.0")
     implementation ("com.google.accompanist:accompanist-swiperefresh:0.36.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
 }

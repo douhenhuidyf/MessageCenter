@@ -32,6 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
@@ -51,7 +52,7 @@ import com.example.messagecenter.ui.component.MessagePreviewCell
 fun MessageScreen(
     navController: NavController,
     modifier: Modifier = Modifier,
-    viewModel : ContactViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    viewModel : ContactViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
@@ -63,6 +64,10 @@ fun MessageScreen(
         val successState = uiState as MessageUiState.Success
         availableContacts = successState.contacts
         availableHasMore = successState.hasMore
+    }
+
+    SideEffect {
+        Log.d("RecompositionTracker", "MessageScreen 重组了一次")
     }
 
     Scaffold(
@@ -84,24 +89,24 @@ fun MessageScreen(
                 markAsRead = viewModel::markAsRead,
                 deleteContact = viewModel::deleteContact
             )
-            when (uiState) {
-                is MessageUiState.Loading -> {
-                    Toast.makeText(
-                        LocalContext.current,
-                        "Loading...",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-                is MessageUiState.Error -> {
-                    val errorState = uiState as MessageUiState.Error
-                    Toast.makeText(
-                        LocalContext.current,
-                        "Error: ${errorState.exception.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-                else -> {}
-            }
+//            when (uiState) {
+//                is MessageUiState.Loading -> {
+//                    Toast.makeText(
+//                        LocalContext.current,
+//                        "Loading...",
+//                        Toast.LENGTH_SHORT
+//                    ).show()
+//                }
+//                is MessageUiState.Error -> {
+//                    val errorState = uiState as MessageUiState.Error
+//                    Toast.makeText(
+//                        LocalContext.current,
+//                        "Error: ${errorState.exception.message}",
+//                        Toast.LENGTH_SHORT
+//                    ).show()
+//                }
+//                else -> {}
+//            }
         }
     }
 }
