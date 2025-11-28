@@ -13,6 +13,8 @@ import androidx.room.Database
 import androidx.room.OnConflictStrategy
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 
 @Entity(tableName = "contacts")
@@ -26,34 +28,48 @@ data class  ContactEntity(
     val isFromSystem : Boolean,
     val previewText: String,
     val timestamp: Long,
-    val isRead: Boolean = false,
 //    val isMuted: Boolean = false,
     val unReadNum: Int = 0,
-//    val hasPinned: Boolean = false,
+//    val isPinned: Boolean = false,
 )
 
 @Dao
 interface ContactEntityDao {
+    @Query("SELECT COUNT(*) FROM contacts")
+    fun getCount(): Flow<Int>
+    
+    @Query("SELECT COUNT(*) FROM contacts")
+    suspend fun getContactCount(): Int
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(contactEntity: ContactEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-
     suspend fun insertContacts(contacts: List<ContactEntity>)
 
-    @Update
-    suspend fun update(contactEntity: ContactEntity)
-
     @Query("DELETE FROM contacts WHERE contactId = :contactId")
-    suspend fun delete(contactId: Int)
+    suspend fun deleteContact(contactId: Int)
 
-    @Query("SELECT * FROM contacts ORDER BY timestamp DESC LIMIT :groupNum OFFSET :startNum")
-    suspend fun getMoreContacts(startNum : Int, groupNum : Int): List<ContactEntity>
+    @Query("DELETE FROM contacts")
+    suspend fun deleteAllContacts()
+
+    @Query("SELECT * FROM contacts ORDER BY timestamp DESC LIMIT :limit")
+    fun getContactsStream(limit: Int): Flow<List<ContactEntity>>
+
+    @Query("SELECT * FROM contacts WHERE contactId = :contactId LIMIT 1")
+    fun getContact(contactId: Int): Flow<ContactEntity>
+
+    @Query("UPDATE contacts SET unReadNum = 0 WHERE contactId = :contactId")
+    suspend fun markAsRead(contactId: Int)
+
+    @Query("UPDATE contacts SET contactSureName = :newSureName WHERE contactId = :contactId")
+    suspend fun updateSureName(contactId: Int, newSureName: String) 
+
 }
 
 @Database(entities = [ContactEntity::class], version = 1, exportSchema = false)
 abstract class ContactsDatabase : RoomDatabase() {
-    abstract fun ContactEntityDao(): ContactEntityDao
+    abstract fun contactEntityDao(): ContactEntityDao
 
     companion object {
         @Volatile
@@ -69,11 +85,15 @@ abstract class ContactsDatabase : RoomDatabase() {
     }
 }
 
-
-
 class ContactRepository(
     private val contactEntityDao: ContactEntityDao,
 ) {
+    fun getContactCountFlow(): Flow<Int> = contactEntityDao.getCount()
+
+    suspend fun getContactCount(): Int{
+        return contactEntityDao.getContactCount()
+    }
+    
     suspend fun insertContact(contactEntity: ContactEntity) {
         contactEntityDao.insert(contactEntity)
     }
@@ -82,34 +102,27 @@ class ContactRepository(
         contactEntityDao.insertContacts(contacts)
     }
 
-    suspend fun updateContact(contactEntity: ContactEntity) {
-        contactEntityDao.update(contactEntity)
+    fun getContactsStream(limit: Int): Flow<List<ContactEntity>> {
+        return contactEntityDao.getContactsStream(limit)
+    }
+
+    suspend fun getContact(contactId: Int): Flow<ContactEntity> {
+        return contactEntityDao.getContact(contactId)
+    }
+
+    suspend fun markAsRead(contactId: Int) {
+        contactEntityDao.markAsRead(contactId)
     }
 
     suspend fun deleteContact(contactId: Int) {
-        contactEntityDao.delete(contactId)
+        contactEntityDao.deleteContact(contactId)
     }
-    suspend fun getMoreContacts(startNum: Int, groupNum: Int): Result<List<ContactEntity>> {
-        return try {
-            val contacts = contactEntityDao.getMoreContacts(startNum, groupNum)
-            Log.d("ContactRepository", "Fetched ${contacts.size} contacts")
-            Result.success(contacts)
-        } catch (e: Exception) {
-            Log.e("ContactRepository", "Error fetching contacts: ${e.message}")
-            Result.failure(e)
-        }
+
+    suspend fun deleteAllContacts() {
+        contactEntityDao.deleteAllContacts()
     }
-    // 标记消息为已读
-//    suspend fun markAsRead(messageId: String) {
-//        messageDao.markAsRead(messageId)
-//        // 可以在这里同步到服务器
-//        // messageService.markAsRead(messageId)
-//    }
-//
-//    // 删除消息
-//    suspend fun deleteMessage(messageId: String) {
-//        messageDao.delete(messageId)
-//        // 可以在这里同步到服务器
-//        // messageService.deleteMessage(messageId)
-//    }
+
+    suspend fun updateSureName(contactId: Int, newSureName: String) {
+        contactEntityDao.updateSureName(contactId, newSureName)
+    }
 }

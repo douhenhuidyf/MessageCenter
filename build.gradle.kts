@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.compose) apply false
     id("com.google.devtools.ksp") version "2.3.2" apply false
+    kotlin("plugin.serialization") version "1.8.0" apply false
 }
 
 extra["room_version"] = "2.8.4"
