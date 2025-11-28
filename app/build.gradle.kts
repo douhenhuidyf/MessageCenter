@@ -42,7 +42,7 @@ android {
         compose = true
     }
 }
-
+val enableBtrace: Boolean = project.findProperty("enable_btrace")?.toString()?.toBoolean() == true
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -72,4 +72,9 @@ dependencies {
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.3.0")
     implementation ("com.google.accompanist:accompanist-swiperefresh:0.36.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+    if (enableBtrace) {
+        implementation("com.bytedance.btrace:rhea-inhouse:3.0.0")
+    } else {
+        implementation ("com.bytedance.btrace:rhea-inhouse-noop:3.0.0")
+    }
 }

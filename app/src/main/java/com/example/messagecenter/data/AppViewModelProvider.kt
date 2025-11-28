@@ -1,4 +1,4 @@
-package com.example.messagecenter.data.viewmodel
+package com.example.messagecenter.data
 
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory
 import androidx.lifecycle.createSavedStateHandle
@@ -19,9 +19,9 @@ object AppViewModelProvider {
             )
         }
         initializer {
-            ContactDetailViewModel(
+            _root_ide_package_.com.example.messagecenter.data.viewmodel.ContactDetailViewModel(
                 messageCenterApplication().container.contactRepository,
-                savedStateHandle = this.createSavedStateHandle() 
+                savedStateHandle = this.createSavedStateHandle()
             )
         }
     }

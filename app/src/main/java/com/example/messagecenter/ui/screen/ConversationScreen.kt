@@ -25,7 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.messagecenter.data.viewmodel.AppViewModelProvider
+import com.example.messagecenter.data.AppViewModelProvider
 import com.example.messagecenter.data.viewmodel.ContactDetailViewModel
 @Composable
 fun ConversationScreen(

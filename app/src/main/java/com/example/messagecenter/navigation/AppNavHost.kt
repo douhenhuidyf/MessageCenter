@@ -18,7 +18,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 
 
-import com.example.messagecenter.data.viewmodel.AppViewModelProvider
+import com.example.messagecenter.data.AppViewModelProvider
 import com.example.messagecenter.data.viewmodel.ContactViewModel
 import com.example.messagecenter.ui.screen.ContactScreen
 import com.example.messagecenter.ui.screen.ConversationScreen

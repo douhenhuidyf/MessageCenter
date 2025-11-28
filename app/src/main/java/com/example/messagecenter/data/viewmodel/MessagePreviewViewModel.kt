@@ -1,26 +1,45 @@
 package com.example.messagecenter.data.viewmodel
 
+import android.content.Context
 import android.util.Log
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-
-import com.example.messagecenter.data.repository.ContactEntity
-import com.example.messagecenter.data.repository.ContactRepository
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+
+import com.example.messagecenter.data.repository.ContactEntity
+import com.example.messagecenter.data.repository.ContactRepository
+import java.io.File
+import java.io.FileOutputStream
 
 /*
 TODO:
 1.delete message
 */
+
+@Serializable
+data class MockContact(
+    val contactId: Int,
+    val contactName: String,
+    val contactSureName: String?,
+    val isFromSystem: Boolean,
+    val previewText: String,
+    val timestamp: Long,
+    val unReadNum: Int,
+)
 
 
 sealed class MessageUiState {
@@ -55,6 +74,7 @@ class ContactViewModel(
         if (contacts.isEmpty() && totalCount == 0) {
             MessageUiState.Error(Exception("错误:无数据"))
         } else {
+            Log.d("ContactViewModel", "loadSize ${loadSize.value} contacts")
             val hasMore = contacts.size < totalCount
             MessageUiState.Success(contacts, hasMore = hasMore)
         }
@@ -90,5 +110,61 @@ class ContactViewModel(
         viewModelScope.launch {
             contactRepository.deleteContact(contactId)
         }
+    }
+
+    fun deleteAllContacts() {
+        viewModelScope.launch {
+            contactRepository.deleteAllContacts()
+        }
+    }
+
+    fun insertMockContact(context: Context) {
+        viewModelScope.launch {
+            val imageStorageManager: ImageStorageManager = ImageStorageManager(context)
+            val jsonString = context.assets.open("mock_data/mock_messages.json").bufferedReader().use { it.readText() }
+            val mockContacts = Json.decodeFromString<List<MockContact>>(jsonString)
+            val contacts = mockContacts.map { mock ->
+                val imagePath = try {
+                    val inputStream = context.assets.open("mock_data/mock_avatars/avatar_${mock.contactId}.jpg")
+                    val bitmap = BitmapFactory.decodeStream(inputStream)
+                    imageStorageManager.saveContactImage(bitmap, mock.contactId)
+                } catch (e: Exception) {
+                    Log.e("AppDataContainer", "Failed to load avatar for ${mock.contactId}", e)
+                    ""
+                }
+                ContactEntity(
+                    contactId = mock.contactId,
+                    contactName = mock.contactName,
+                    contactSureName = mock.contactSureName ?: "",
+                    contactAvatar = imagePath,
+                    isFromSystem = mock.isFromSystem,
+                    previewText = mock.previewText,
+                    timestamp = System.currentTimeMillis() - mock.timestamp,
+                    unReadNum = mock.unReadNum
+                )
+            }
+            contactRepository.insertContacts(contacts)
+        }
+    }
+}
+
+
+
+class ImageStorageManager(private val context: Context) {
+
+    private fun getImageStorageDir(): File {
+        return File(context.filesDir, "contact_images").apply {
+            if (!exists()) mkdirs()
+        }
+    }
+
+    fun saveContactImage(bitmap: Bitmap, contactId: Int): String {
+        val imageFile = File(getImageStorageDir(), "contact_$contactId.jpg")
+
+        FileOutputStream(imageFile).use { outputStream ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+        }
+
+        return imageFile.absolutePath
     }
 }

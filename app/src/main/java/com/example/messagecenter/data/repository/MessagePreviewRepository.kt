@@ -50,6 +50,9 @@ interface ContactEntityDao {
     @Query("DELETE FROM contacts WHERE contactId = :contactId")
     suspend fun deleteContact(contactId: Int)
 
+    @Query("DELETE FROM contacts")
+    suspend fun deleteAllContacts()
+
     @Query("SELECT * FROM contacts ORDER BY timestamp DESC LIMIT :limit")
     fun getContactsStream(limit: Int): Flow<List<ContactEntity>>
 
@@ -113,6 +116,10 @@ class ContactRepository(
 
     suspend fun deleteContact(contactId: Int) {
         contactEntityDao.deleteContact(contactId)
+    }
+
+    suspend fun deleteAllContacts() {
+        contactEntityDao.deleteAllContacts()
     }
 
     suspend fun updateSureName(contactId: Int, newSureName: String) {

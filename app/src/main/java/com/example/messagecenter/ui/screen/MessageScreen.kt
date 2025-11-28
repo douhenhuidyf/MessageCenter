@@ -44,7 +44,7 @@ import kotlinx.coroutines.launch
 import com.example.messagecenter.data.repository.ContactEntity
 import com.example.messagecenter.data.viewmodel.ContactViewModel
 import com.example.messagecenter.data.viewmodel.MessageUiState
-import com.example.messagecenter.data.viewmodel.AppViewModelProvider
+import com.example.messagecenter.data.AppViewModelProvider
 import com.example.messagecenter.ui.component.MessagePageTopBar
 import com.example.messagecenter.ui.component.MessagePreviewCell
 
@@ -52,19 +52,11 @@ import com.example.messagecenter.ui.component.MessagePreviewCell
 fun MessageScreen(
     navController: NavController,
     modifier: Modifier = Modifier,
-    viewModel : ContactViewModel
+    availableContacts: List<ContactEntity>,
+    availableHasMore: Boolean,
+    viewModel: ContactViewModel
 ) {
-    val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
-
-    var availableContacts by remember { mutableStateOf<List<ContactEntity>>(emptyList()) }
-    var availableHasMore by remember { mutableStateOf(false) }
-
-    if (uiState is MessageUiState.Success) {
-        val successState = uiState as MessageUiState.Success
-        availableContacts = successState.contacts
-        availableHasMore = successState.hasMore
-    }
 
     SideEffect {
         Log.d("RecompositionTracker", "MessageScreen 重组了一次")

@@ -52,7 +52,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.example.messagecenter.data.viewmodel.AppViewModelProvider
+import com.example.messagecenter.data.AppViewModelProvider
 import com.example.messagecenter.data.viewmodel.ContactViewModel
 
 import com.example.messagecenter.ui.component.Avatar
