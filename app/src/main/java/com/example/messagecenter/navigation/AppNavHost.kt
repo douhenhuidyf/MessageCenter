@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -23,6 +24,7 @@ import com.example.messagecenter.data.viewmodel.ContactViewModel
 import com.example.messagecenter.ui.screen.ContactScreen
 import com.example.messagecenter.ui.screen.ConversationScreen
 import com.example.messagecenter.ui.screen.MainScreen
+import com.example.messagecenter.ui.screen.SearchScreen
 
 
 @Composable
@@ -106,6 +108,35 @@ fun AppNavHost(
             val argument = requireNotNull(it.arguments)
             ContactScreen( navController)
         }
+        composable(
+            Destination.SEARCH.route,
+            enterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { fullWidth -> fullWidth },
+                    animationSpec = tween(300)
+                )
+            },
+            exitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { fullWidth -> -fullWidth / 3 },
+                    animationSpec = tween(300)
+                )
+            },
+            popEnterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { fullWidth -> -fullWidth / 3 },
+                    animationSpec = tween(300)
+                )
+            },
+            popExitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { fullWidth -> fullWidth },
+                    animationSpec = tween(300)
+                )
+            }
+        ) {
+            SearchScreen(navController)
+        }
     }
 }
 
@@ -119,5 +150,6 @@ enum class Destination(
     MESSAGE("message_preview", "Message", Icons.Default.Email, "message_preview"),
     PROFILE("profile", "Profile", Icons.Default.Person, "profile"),
     CONVERSATION("conversation/{contactId}", "Conversation", Icons.Default.Person, "conversation"),
-    CONTACT("contact/{contactId}", "Contact",  Icons.Default.Person, "contact")
+    CONTACT("contact/{contactId}", "Contact",  Icons.Default.Person, "contact"),
+    SEARCH("search", "Search", Icons.Default.Search, "search")
 }

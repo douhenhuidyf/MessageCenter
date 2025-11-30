@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
@@ -154,28 +155,32 @@ fun MessagePreviewCell(
                     Text(
                         text = contactName,
                         style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
 
                     if (contactEntity.isFromSystem) {
                         Surface(
                             modifier = Modifier.padding(start = 4.dp),
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            shape = RectangleShape,
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = RoundedCornerShape(8.dp),
                         ){
                             Text(
                                 text = "系统信息",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 modifier = Modifier
                             )
                         }
                     }
                 }
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = timestampString,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -187,13 +192,13 @@ fun MessagePreviewCell(
                     Text(
                         text = "[${contactEntity.unReadNum}条]",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                 }
                 Text(
                     text = contactEntity.previewText,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
@@ -215,7 +220,10 @@ fun MessagePreviewCell(
 }
 
 @Composable
-fun MessagePageTopBar(modifier: Modifier = Modifier) {
+fun MessagePageTopBar(
+    navController: NavController,
+    modifier: Modifier = Modifier
+) {
     val context = LocalContext.current
     Row(
         modifier = modifier
@@ -252,11 +260,7 @@ fun MessagePageTopBar(modifier: Modifier = Modifier) {
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = {
-                    Toast.makeText(
-                        context,
-                        "功能暂未实现",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    navController.navigate("search")
                 }
             )
         )
@@ -272,10 +276,10 @@ fun MessagePreviewCellPreview(){
         id = 1,
         contactId = 1,
         contactName = "张三",
-        contactSureName = "张三丰",
+        contactSureName = "张三丰11111111111111111111111111",
         contactAvatar = "",
         isFromSystem = true,
-        previewText = "11111111111111111111111111",
+        previewText = "21111111111111111111111111",
         timestamp = 159999999,
         unReadNum = 10
     )

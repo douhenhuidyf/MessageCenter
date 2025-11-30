@@ -2,26 +2,24 @@ package com.example.messagecenter.data.viewmodel
 
 import android.content.Context
 import android.util.Log
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 
 import com.example.messagecenter.data.repository.ContactEntity
 import com.example.messagecenter.data.repository.ContactRepository
+import com.example.messagecenter.data.repository.MessageEntity
+import com.example.messagecenter.data.repository.MessageRepository
 import java.io.File
 import java.io.FileOutputStream
 
@@ -40,7 +38,14 @@ data class MockContact(
     val timestamp: Long,
     val unReadNum: Int,
 )
-
+@Serializable
+data class MockMessage(
+    val conversationId : Int,
+    val senderName: String,
+    val receiverName: String,
+    val messageText: String,
+    val timestampOffset: Long,
+)
 
 sealed class MessageUiState {
     object Loading : MessageUiState()
@@ -49,7 +54,8 @@ sealed class MessageUiState {
 }
 
 class ContactViewModel(
-    private val contactRepository: ContactRepository
+    private val contactRepository: ContactRepository,
+    private val messageRepository: MessageRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<MessageUiState>(MessageUiState.Loading)
     
@@ -76,7 +82,7 @@ class ContactViewModel(
         } else {
             Log.d("ContactViewModel", "loadSize ${loadSize.value} contacts")
             val hasMore = contacts.size < totalCount
-            MessageUiState.Success(contacts, hasMore = hasMore)
+            MessageUiState.Success(contacts, hasMore)
         }
     }
     .stateIn(
@@ -121,7 +127,7 @@ class ContactViewModel(
     fun insertMockContact(context: Context) {
         viewModelScope.launch {
             val imageStorageManager: ImageStorageManager = ImageStorageManager(context)
-            val jsonString = context.assets.open("mock_data/mock_messages.json").bufferedReader().use { it.readText() }
+            val jsonString = context.assets.open("mock_data/mock_contacts.json").bufferedReader().use { it.readText() }
             val mockContacts = Json.decodeFromString<List<MockContact>>(jsonString)
             val contacts = mockContacts.map { mock ->
                 val imagePath = try {
@@ -144,6 +150,23 @@ class ContactViewModel(
                 )
             }
             contactRepository.insertContacts(contacts)
+        }
+    }
+    
+    fun insertMockConversation(context: Context) {
+        viewModelScope.launch {
+            val jsonString = context.assets.open("mock_data/mock_messages.json").bufferedReader().use { it.readText() }
+            val mockMessages = Json.decodeFromString<List<MockMessage>>(jsonString)
+            val messages = mockMessages.map { mock ->
+                MessageEntity(
+                    conversationId = mock.conversationId,
+                    senderName = mock.senderName,
+                    receiverName = mock.receiverName,
+                    messageText = mock.messageText,
+                    timestamp = System.currentTimeMillis() - mock.timestampOffset,
+                )
+            }
+            messageRepository.insertMessages(messages)
         }
     }
 }

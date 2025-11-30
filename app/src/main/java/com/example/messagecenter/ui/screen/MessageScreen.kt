@@ -63,7 +63,7 @@ fun MessageScreen(
     }
 
     Scaffold(
-        topBar = { MessagePageTopBar() },
+        topBar = { MessagePageTopBar(navController) },
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 8.dp)

@@ -4,17 +4,13 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Dao
 import androidx.room.Insert
-import androidx.room.Update
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 import android.content.Context
-import android.util.Log
 import androidx.room.Database
 import androidx.room.OnConflictStrategy
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 
 @Entity(tableName = "contacts")
@@ -63,7 +59,13 @@ interface ContactEntityDao {
     suspend fun markAsRead(contactId: Int)
 
     @Query("UPDATE contacts SET contactSureName = :newSureName WHERE contactId = :contactId")
-    suspend fun updateSureName(contactId: Int, newSureName: String) 
+    suspend fun updateSureName(contactId: Int, newSureName: String)
+
+    @Query("SELECT * FROM contacts WHERE contactName LIKE '%' || :query || '%' OR contactSureName LIKE '%' || :query || '%' ORDER BY timestamp DESC LIMIT :limit")
+    suspend fun searchContacts(query: String, limit: Int): List<ContactEntity>
+
+    @Query("SELECT * FROM contacts WHERE contactId IN (:contactIds)")
+    suspend fun getContactsByIds(contactIds: List<Int>): List<ContactEntity>
 
 }
 
@@ -124,5 +126,13 @@ class ContactRepository(
 
     suspend fun updateSureName(contactId: Int, newSureName: String) {
         contactEntityDao.updateSureName(contactId, newSureName)
+    }
+
+    suspend fun searchContacts(query: String, limit: Int): List<ContactEntity> {
+        return contactEntityDao.searchContacts(query, limit)
+    }
+
+    suspend fun getContactsByIds(contactIds: List<Int>): List<ContactEntity> {
+        return contactEntityDao.getContactsByIds(contactIds)
     }
 }

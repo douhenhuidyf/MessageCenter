@@ -8,26 +8,31 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 import com.example.messagecenter.ui.theme.theme.HanSansTypography
-import com.example.messagecenter.ui.theme.theme.Pink40
-import com.example.messagecenter.ui.theme.theme.Pink80
-import com.example.messagecenter.ui.theme.theme.Purple40
-import com.example.messagecenter.ui.theme.theme.Purple80
-import com.example.messagecenter.ui.theme.theme.PurpleGrey40
-import com.example.messagecenter.ui.theme.theme.PurpleGrey80
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    background = Color(0xFF121212),
+    primary = Color(0xFF121212),
+
+    secondaryContainer = Color(0xFF262626),
+    primaryContainer = Color(0xFF123064),
+
+    onSecondaryContainer = Color.White,
+    onPrimaryContainer = Color.White
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    background = Color.White,
+    primary = Color.White,
+
+    secondaryContainer = Color(0xFFF3F4F6),
+    primaryContainer = Color(0xFFD2E3FF),
+
+    onSecondaryContainer = Color.Black,
+    onPrimaryContainer = Color.Black
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
@@ -43,7 +48,7 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun MessageCenterTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

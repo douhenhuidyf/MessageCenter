@@ -3,6 +3,7 @@ package com.example.messagecenter.ui.screen
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,21 +13,31 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,22 +59,25 @@ fun SettingScreen(
     Scaffold(
         modifier = Modifier
             .fillMaxSize(),
-        containerColor = Color(0xFFF2F2F5),
         topBar = {
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .statusBarsPadding(),
-
+                    .statusBarsPadding()
+                    .padding(horizontal = 8.dp),
                 ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                    contentDescription = null
+                    contentDescription = null,
+                    modifier = Modifier
+                        .align(Alignment.CenterStart),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
                     text = "设置",
                     style = MaterialTheme.typography.displayMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.align(Alignment.Center) 
                 )
             }
         }
@@ -78,7 +92,7 @@ fun SettingScreen(
             Text(
                 text = "用户设置",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier
                     .padding(start = 12.dp)
             )
@@ -87,22 +101,22 @@ fun SettingScreen(
                     .fillMaxWidth()
                     .padding(bottom = 8.dp),
                     shape = RoundedCornerShape(18.dp),
-                color = MaterialTheme.colorScheme.surface
+                color = MaterialTheme.colorScheme.secondaryContainer
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp)
                 ) {
-                    SettingSell("设置", Icons.Default.Settings, {})
+                    BaseSettingSell("设置", Icons.Default.Settings, "nav",{})
                     HorizontalDivider()
-                    SettingSell("设置", Icons.Default.Settings, {})
+                    BaseSettingSell("设置", Icons.Default.Settings, "action",{})
                 }
             }
             Text(
                 text = "数据看板",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier
                     .padding(start = 12.dp)
             )
@@ -111,23 +125,23 @@ fun SettingScreen(
                     .fillMaxWidth()
                     .padding(bottom = 8.dp),
                 shape = RoundedCornerShape(18.dp),
-                color = MaterialTheme.colorScheme.surface
+                color = MaterialTheme.colorScheme.secondaryContainer
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp)
                 ) {
-                    SettingSell("个人数据", Icons.Default.AccountCircle, {})
+                    BaseSettingSell("个人数据", Icons.Default.AccountCircle, "nav",{})
                     HorizontalDivider()
-                    SettingSell("后台记录", Icons.Default.Build, {})
+                    BaseSettingSell("后台记录", Icons.Default.Build, "nav",{})
                 }
             }
 
             Text(
                 text = "测试设置",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier
                     .padding(start = 12.dp)
             )
@@ -136,7 +150,7 @@ fun SettingScreen(
                     .fillMaxWidth()
                     .padding(bottom = 8.dp),
                 shape = RoundedCornerShape(18.dp),
-                color = MaterialTheme.colorScheme.surface
+                color = MaterialTheme.colorScheme.secondaryContainer
             ) {
                 Column(
                     modifier = Modifier
@@ -144,16 +158,18 @@ fun SettingScreen(
                         .padding(horizontal = 8.dp)
                 ) {
                     val context = LocalContext.current
-                    SettingSell("清空记录", Icons.Default.Delete, {
+                    BaseSettingSell("清空记录", Icons.Default.Delete, "action", {
                         Toast.makeText(context, "已删除全部消息", Toast.LENGTH_SHORT).show()
                         contactViewModel.deleteAllContacts()
-
                     })
                     HorizontalDivider()
-                    SettingSell("注入记录", Icons.Default.Edit, {
+                    BaseSettingSell("注入记录", Icons.Default.Edit, "action", {
                         Toast.makeText(context, "已注入全部消息", Toast.LENGTH_SHORT).show()
                         contactViewModel.insertMockContact(context)
+                        contactViewModel.insertMockConversation(context)
                     })
+                    HorizontalDivider()
+                    SwitchSettingSell("接受新消息", Icons.Default.Email, {},{})
                 }
             }
         }
@@ -163,9 +179,10 @@ fun SettingScreen(
 
 
 @Composable
-fun SettingSell(
+fun BaseSettingSell(
     text: String,
     icon: ImageVector,
+    type: String,
     conClick: () -> Unit,
     modifier: Modifier = Modifier
 ){
@@ -188,24 +205,90 @@ fun SettingSell(
         Text(
             text = text,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
             modifier = Modifier.padding(8.dp)
         )
         Spacer(modifier = Modifier.weight(1f))
+        if (type == "nav"){
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null
+            )
+        }
+        else if (type == "action"){
+            Icon(
+                imageVector = Icons.Default.PlayArrow,
+                contentDescription = null
+            )
+        }
+    }
+}
+
+@Composable
+fun  SwitchSettingSell(
+    text: String,
+    icon: ImageVector,
+    onFalse: () -> Unit,
+    onTrue: () -> Unit,
+    modifier: Modifier = Modifier
+){
+    var checked by remember { mutableStateOf(false) }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+
+        ) {
         Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            imageVector = icon,
             contentDescription = null
         )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier.padding(8.dp)
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        Switch(
+            checked = checked,
+            onCheckedChange = {
+                checked = it
+                if (it){
+                    onTrue()
+                }
+                else{
+                    onFalse()
+                }
+            },
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = MaterialTheme.colorScheme.primary,
+                checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
+                uncheckedThumbColor = MaterialTheme.colorScheme.secondary,
+                uncheckedTrackColor = MaterialTheme.colorScheme.secondaryContainer
+            )
+        )
+    }
+}
+
+
+
+@Preview(showBackground = true)
+@Composable
+fun BaseSettingSellPreview(){
+    MessageCenterTheme {
+        BaseSettingSell("设置", Icons.Default.Settings, "nav",{})
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun SettingSellPreview(){
+fun SwitchSettingSellPreview(){
     MessageCenterTheme {
-        SettingSell("设置", Icons.Default.Settings, {})
+        SwitchSettingSell("接受新消息", Icons.Default.Settings, {},{})
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable

@@ -1,11 +1,13 @@
 package com.example.messagecenter.ui.screen
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
@@ -21,6 +23,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavController
 import com.example.messagecenter.data.repository.ContactEntity
@@ -47,6 +50,14 @@ fun MainScreen(
          availableContacts = successState.contacts
          availableHasMore = successState.hasMore
      }
+    else if (uiState is MessageUiState.Error) {
+        val errorState = uiState as MessageUiState.Error
+        Toast.makeText(
+            LocalContext.current,
+            "Error: ${errorState.exception.message}",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -105,6 +116,11 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Home screen", textAlign = TextAlign.Center)
+        Text(
+            "Home screen",
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.displayMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
     }
 }
