@@ -57,6 +57,7 @@ dependencies {
     implementation(libs.androidx.compose.runtime.saveable)
     implementation(libs.androidx.compose.runtime)
     implementation(libs.androidx.ui)
+    implementation(libs.androidx.compose.foundation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -73,6 +74,8 @@ dependencies {
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.3.0")
     implementation ("com.google.accompanist:accompanist-swiperefresh:0.36.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("androidx.work:work-runtime-ktx:2.8.1")
     if (enableBtrace) {
         implementation("com.bytedance.btrace:rhea-inhouse:3.0.0")
     } else {

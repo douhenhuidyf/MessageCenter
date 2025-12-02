@@ -235,7 +235,7 @@ fun MessagePageTopBar(
         Image(
             imageVector = Icons.Default.Menu,
             contentDescription = null,
-            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground),
+            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimaryContainer),
             modifier = Modifier.clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -250,12 +250,12 @@ fun MessagePageTopBar(
         )
         Text("消息",
             style = MaterialTheme.typography.displayMedium,
-            color = MaterialTheme.colorScheme.onBackground
+            color = MaterialTheme.colorScheme.onPrimaryContainer
         )
         Image(
             imageVector = Icons.Default.Search,
             contentDescription = null,
-            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground),
+            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimaryContainer),
             modifier = Modifier.clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,

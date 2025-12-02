@@ -11,6 +11,7 @@ import com.example.messagecenter.data.viewmodel.ContactDetailViewModel
 import com.example.messagecenter.data.viewmodel.ConversationViewModel
 import com.example.messagecenter.MessageCenterApplication
 import com.example.messagecenter.data.viewmodel.SearchViewModel
+import com.example.messagecenter.data.viewmodel.SettingsViewModel
 
 
 object AppViewModelProvider {
@@ -37,6 +38,11 @@ object AppViewModelProvider {
             SearchViewModel(
                 messageCenterApplication().container.contactRepository,
                 messageCenterApplication().container.messageRepository
+            )
+        }
+        initializer {
+            SettingsViewModel(
+                messageCenterApplication().container.preferencesRepository
             )
         }
     }

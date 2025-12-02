@@ -34,6 +34,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,14 +49,20 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.messagecenter.data.AppViewModelProvider
 import com.example.messagecenter.data.viewmodel.ContactViewModel
+import com.example.messagecenter.data.viewmodel.SettingsViewModel
 import com.example.messagecenter.ui.theme.MessageCenterTheme
+import kotlinx.coroutines.flow.Flow
 
 @Composable
 fun SettingScreen(
+    settingsViewModel: SettingsViewModel = viewModel(factory = AppViewModelProvider.Factory),
     contactViewModel: ContactViewModel = viewModel(factory = AppViewModelProvider.Factory),
     modifier: Modifier = Modifier,
 ){
     val context = LocalContext.current
+
+    val enableReceiving by settingsViewModel.enableReceiving.collectAsState(initial = false)
+
     Scaffold(
         modifier = Modifier
             .fillMaxSize(),
@@ -169,7 +176,10 @@ fun SettingScreen(
                         contactViewModel.insertMockConversation(context)
                     })
                     HorizontalDivider()
-                    SwitchSettingSell("接受新消息", Icons.Default.Email, {},{})
+                    SwitchSettingSell("接受新消息", Icons.Default.Email,
+                        checked = enableReceiving,
+                        onFalse = { settingsViewModel.toggleEnableReceiving(false) },
+                        onTrue = { settingsViewModel.toggleEnableReceiving(true) })
                 }
             }
         }
@@ -228,11 +238,11 @@ fun BaseSettingSell(
 fun  SwitchSettingSell(
     text: String,
     icon: ImageVector,
+    checked: Boolean,
     onFalse: () -> Unit,
     onTrue: () -> Unit,
     modifier: Modifier = Modifier
 ){
-    var checked by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier
             .fillMaxWidth(),
@@ -253,7 +263,6 @@ fun  SwitchSettingSell(
         Switch(
             checked = checked,
             onCheckedChange = {
-                checked = it
                 if (it){
                     onTrue()
                 }
@@ -273,27 +282,26 @@ fun  SwitchSettingSell(
 
 
 
-@Preview(showBackground = true)
-@Composable
-fun BaseSettingSellPreview(){
-    MessageCenterTheme {
-        BaseSettingSell("设置", Icons.Default.Settings, "nav",{})
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun SwitchSettingSellPreview(){
-    MessageCenterTheme {
-        SwitchSettingSell("接受新消息", Icons.Default.Settings, {},{})
-    }
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun SettingScreenPreview(){
-    MessageCenterTheme {
-        SettingScreen()
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun BaseSettingSellPreview(){
+//    MessageCenterTheme {
+//        BaseSettingSell("设置", Icons.Default.Settings, "nav",{})
+//    }
+//}
+//
+//@Preview(showBackground = true)
+//@Composable
+//fun SwitchSettingSellPreview(){
+//    MessageCenterTheme {
+//        SwitchSettingSell("接受新消息", Icons.Default.Settings, {},{})
+//    }
+//}
+//
+//@Preview(showBackground = true)
+//@Composable
+//fun SettingScreenPreview(){
+//    MessageCenterTheme {
+//        SettingScreen()
+//    }
+//}

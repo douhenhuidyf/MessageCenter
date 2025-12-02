@@ -30,12 +30,14 @@ import com.example.messagecenter.data.repository.ContactEntity
 
 import com.example.messagecenter.data.viewmodel.ContactViewModel
 import com.example.messagecenter.data.viewmodel.MessageUiState
+import com.example.messagecenter.data.viewmodel.SettingsViewModel
 import com.example.messagecenter.navigation.Destination
 
 
 @Composable
 fun MainScreen(
     contactViewModel: ContactViewModel,
+    settingsViewModel: SettingsViewModel,
     navController: NavController
 ) {
     var selectedDestination by rememberSaveable { mutableIntStateOf(0) }
@@ -50,7 +52,7 @@ fun MainScreen(
          availableContacts = successState.contacts
          availableHasMore = successState.hasMore
      }
-    else if (uiState is MessageUiState.Error) {
+    else if (uiState is MessageUiState.Error && selectedDestination == 1) {
         val errorState = uiState as MessageUiState.Error
         Toast.makeText(
             LocalContext.current,
@@ -103,7 +105,7 @@ fun MainScreen(
             when (selectedDestination) {
                 0 -> HomeScreen()
                 1 -> MessageScreen(navController, Modifier, availableContacts, availableHasMore, contactViewModel)
-                2 -> SettingScreen()
+                2 -> SettingScreen(settingsViewModel)
             }
         }
     }

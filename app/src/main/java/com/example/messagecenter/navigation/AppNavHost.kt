@@ -21,6 +21,7 @@ import androidx.navigation.navArgument
 
 import com.example.messagecenter.data.AppViewModelProvider
 import com.example.messagecenter.data.viewmodel.ContactViewModel
+import com.example.messagecenter.data.viewmodel.SettingsViewModel
 import com.example.messagecenter.ui.screen.ContactScreen
 import com.example.messagecenter.ui.screen.ConversationScreen
 import com.example.messagecenter.ui.screen.MainScreen
@@ -32,14 +33,16 @@ fun AppNavHost(
     modifier: Modifier = Modifier
 ) {
     val navController = rememberNavController()
+
     val contactViewModel: ContactViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    val settingsViewModel: SettingsViewModel = viewModel(factory = AppViewModelProvider.Factory)
 
     NavHost(
         navController,
         startDestination = "main_screen"
     ) {
         composable("main_screen") {
-            MainScreen(contactViewModel, navController)
+            MainScreen(contactViewModel, settingsViewModel, navController)
         }
         composable(
             Destination.CONVERSATION.route,

@@ -19,15 +19,20 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -44,15 +49,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+
 import com.example.messagecenter.data.AppViewModelProvider
 import com.example.messagecenter.data.viewmodel.SearchViewModel
 import com.example.messagecenter.ui.component.MessagePreviewCell
 import com.example.messagecenter.ui.theme.MessageCenterTheme
+
+import kotlinx.coroutines.delay
 
 @Composable
 fun SearchScreen(
@@ -61,9 +73,19 @@ fun SearchScreen(
     viewModel: SearchViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var editedName by remember { mutableStateOf("") }
+
     val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    var inputText by remember { mutableStateOf("") }
+
     var searched by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+        delay(100)
+        keyboardController?.show()
+    }
 
     Scaffold(
         modifier = modifier
@@ -91,50 +113,92 @@ fun SearchScreen(
                     tint = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                TextField(
-                    value = editedName,
-                    onValueChange = { editedName = it },
-                    placeholder = { Text(text = "搜索消息") },
+                BasicTextField(
                     modifier = Modifier
                         .weight(1f)
-                        .height(50.dp)
                         .focusRequester(focusRequester),
-                    textStyle = MaterialTheme.typography.bodyMedium,
+                    value = inputText,
                     singleLine = true,
-                    shape = RoundedCornerShape(15.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        focusedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent,
-                        cursorColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    maxLines = 1,
+                    onValueChange = {
+                        inputText = it
+                    },
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     ),
-                    trailingIcon = {
-                        if (editedName.isNotEmpty()) {
-                            IconButton(onClick = { editedName = "" }) {
-                                Icon(
-                                    imageVector = Icons.Default.Clear,
-                                    contentDescription = "Clear text",
-                                    tint = Color.Gray
-                                )
+
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Search
+                    ),
+                    keyboardActions = KeyboardActions {
+                        keyboardController?.hide()
+                        focusManager.clearFocus(true)
+                    },
+                    decorationBox = { innerTextField ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.colorScheme.secondaryContainer
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Search,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+
+                                    Box(
+                                        modifier = Modifier
+                                            .padding(start = 4.dp, end = 4.dp)
+                                            .weight(1f)
+                                    ) {
+                                        if (inputText.isEmpty())
+                                            Text(
+                                                text = "搜索消息",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                            )
+                                        innerTextField()
+                                    }
+
+                                    if (inputText.isNotEmpty())
+                                        Icon(
+                                            imageVector = Icons.Outlined.Close,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier
+                                                .clickable(
+                                                interactionSource = remember { MutableInteractionSource() },
+                                                indication = null,
+                                                onClick = {
+                                                    inputText = ""
+                                                }
+                                            )
+                                        )
+                                }
                             }
                         }
-                    },
-                    keyboardActions = KeyboardActions(onSearch = {})
+                    }
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "搜索",
-                    style = MaterialTheme.typography.displayMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                         onClick = {
-                            viewModel.search(editedName)
+                            viewModel.search(inputText)
                             searched = true
                         }
                     )
