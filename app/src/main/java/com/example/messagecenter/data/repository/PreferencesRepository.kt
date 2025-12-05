@@ -47,7 +47,7 @@ class PreferencesRepository(private val context: Context) {
             }
         }
         .map { preferences ->
-            preferences[ENABLE_DEV_MODE] ?: true
+            preferences[ENABLE_DEV_MODE] ?: false
         }
 
     val enableReceiving: Flow<Boolean> = dataStore.data
@@ -60,7 +60,7 @@ class PreferencesRepository(private val context: Context) {
             }
         }
         .map { preferences ->
-            preferences[ENABLE_RECEIVING] ?: true
+            preferences[ENABLE_RECEIVING] ?: false
         }
 
     suspend fun saveAutoDarkPreference(autoDark: Boolean) {
