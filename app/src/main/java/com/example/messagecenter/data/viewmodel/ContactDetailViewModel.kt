@@ -15,7 +15,9 @@ class ContactDetailUiState (
     val contactName: String,
     val contactSureName: String?,
     val contactAvatar: String,
-    val isFromSystem : Boolean
+    val isFromSystem : Boolean,
+    val isMuted: Boolean = false,
+    val isPinned: Boolean = false
 )
 
 class ContactDetailViewModel(
@@ -27,7 +29,9 @@ class ContactDetailViewModel(
         contactName = "",
         contactSureName = null,
         contactAvatar = "",
-        isFromSystem = false
+        isFromSystem = false,
+        isMuted = false,
+        isPinned = false
     ))
     private val contactId: Int = checkNotNull(savedStateHandle["contactId"])
 
@@ -45,7 +49,9 @@ class ContactDetailViewModel(
                     contactName = contactEntity.contactName,
                     contactSureName = contactEntity.contactSureName,
                     contactAvatar = contactEntity.contactAvatar,
-                    isFromSystem = contactEntity.isFromSystem
+                    isFromSystem = contactEntity.isFromSystem,
+                    isMuted = contactEntity.isMuted,
+                    isPinned = contactEntity.isPinned
                 )
             }
         }
@@ -55,6 +61,20 @@ class ContactDetailViewModel(
         viewModelScope.launch {
             contactRepository.updateSureName(contactId, newSureName)
              loadContactDetail()
+        }
+    }
+
+    fun updateIsMuted(isMuted: Boolean) {
+        viewModelScope.launch {
+            contactRepository.updateIsMuted(contactId, isMuted)
+            loadContactDetail()
+        }
+    }
+
+    fun updateIsPinned(isPinned: Boolean) {
+        viewModelScope.launch {
+            contactRepository.updateIsPinned(contactId, isPinned)
+            loadContactDetail()
         }
     }
 }

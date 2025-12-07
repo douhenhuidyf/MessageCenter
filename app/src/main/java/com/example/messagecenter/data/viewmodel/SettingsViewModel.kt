@@ -19,6 +19,20 @@ class SettingsViewModel(
             initialValue = false
         )
 
+    val themeMode: StateFlow<Int> = preferencesRepository.themeMode
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Companion.WhileSubscribed(5000),
+            initialValue = 0
+        )
+
+    val languageCode: StateFlow<String> = preferencesRepository.languageCode
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Companion.WhileSubscribed(5000),
+            initialValue = "zh"
+        )
+
     val enableDevMode: StateFlow<Boolean> = preferencesRepository.enableDevMode
         .stateIn(
             scope = viewModelScope,
@@ -37,6 +51,18 @@ class SettingsViewModel(
     fun toggleAutoDark(isChecked: Boolean) {
         viewModelScope.launch {
             preferencesRepository.saveAutoDarkPreference(isChecked)
+        }
+    }
+
+    fun setThemeMode(mode: Int) {
+        viewModelScope.launch {
+            preferencesRepository.saveThemeModePreference(mode)
+        }
+    }
+
+    fun setLanguageCode(code: String) {
+        viewModelScope.launch {
+            preferencesRepository.saveLanguageCodePreference(code)
         }
     }
 

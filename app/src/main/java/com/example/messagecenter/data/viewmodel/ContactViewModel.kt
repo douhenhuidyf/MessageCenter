@@ -15,37 +15,37 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import java.io.File
+import java.io.FileOutputStream
 
 import com.example.messagecenter.data.repository.ContactEntity
 import com.example.messagecenter.data.repository.ContactRepository
 import com.example.messagecenter.data.repository.MessageEntity
 import com.example.messagecenter.data.repository.MessageRepository
-import java.io.File
-import java.io.FileOutputStream
 
-/*
-TODO:
-1.delete message
-*/
-
-@Serializable
-data class MockContact(
-    val contactId: Int,
-    val contactName: String,
-    val contactSureName: String?,
-    val isFromSystem: Boolean,
-    val previewText: String,
-    val timestamp: Long,
-    val unReadNum: Int,
-)
 @Serializable
 data class MockMessage(
-    val conversationId : Int,
-    val senderName: String,
-    val receiverName: String,
+    val conversationId: Int,
+    val contactName: String,
+    val isFromSystem: Boolean,
+    val senderId: Int,
+    val receiverId: Int,
     val messageText: String,
     val timestampOffset: Long,
 )
+
+data class GrowthStats(
+    val totalUnread: Int = 0,
+    val totalMessages: Int = 0,
+    val systemMessagesReceived: Int = 0,
+    val systemMessagesRead: Int = 0
+) {
+    val ctr: Float
+        get() = if (totalMessages == 0) 0f else (totalMessages - totalUnread).toFloat() / totalMessages
+
+    val recallRate: Float
+        get() = if (systemMessagesReceived == 0) 0f else systemMessagesRead.toFloat() / systemMessagesReceived
+}
 
 sealed class MessageUiState {
     object Loading : MessageUiState()
@@ -58,7 +58,8 @@ class ContactViewModel(
     private val messageRepository: MessageRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<MessageUiState>(MessageUiState.Loading)
-    
+    val newMessageFlow = contactRepository.newMessageFlow
+
     private var contactSize = contactRepository.getContactCountFlow()
         .stateIn(
             scope = viewModelScope,
@@ -77,22 +78,36 @@ class ContactViewModel(
         contactSize,
         refreshTrigger
     ) { contacts, totalCount, _ ->
-        if (contacts.isEmpty() && totalCount == 0) {
-            MessageUiState.Error(Exception("错误:无数据"))
-        } else {
             Log.d("ContactViewModel", "loadSize ${loadSize.value} contacts")
             val hasMore = contacts.size < totalCount
             MessageUiState.Success(contacts, hasMore)
-        }
     }
-    .stateIn(
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = MessageUiState.Loading
+        )
+
+    val growthStats: StateFlow<GrowthStats> = combine(
+        contactRepository.getTotalUnreadCountFlow(),
+        messageRepository.getTotalMessageCountFlow(),
+        contactRepository.getSystemUnreadCountFlow(),
+        contactRepository.getSystemMessageCountFlow()
+    ) { totalUnread, totalMessages, systemUnread, systemTotal ->
+        GrowthStats(
+            totalUnread = totalUnread,
+            totalMessages = totalMessages,
+            systemMessagesReceived = systemTotal,
+            systemMessagesRead = (systemTotal - systemUnread).coerceAtLeast(0)
+        )
+    }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = MessageUiState.Loading
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = GrowthStats()
     )
 
     fun refreshContact() {
-        viewModelScope.launch{
+        viewModelScope.launch {
             Log.d("ContactViewModel", "refreshContact")
             loadSize.value = pageSize
             refreshTrigger.value += 1
@@ -100,7 +115,10 @@ class ContactViewModel(
     }
 
     fun loadMoreContact() {
-        Log.d("ContactViewModel", "loadMore: loadSize=${loadSize.value}, total=${contactSize.value}")
+        Log.d(
+            "ContactViewModel",
+            "loadMore: loadSize=${loadSize.value}, total=${contactSize.value}"
+        )
         if (loadSize.value < contactSize.value) {
             loadSize.value += pageSize
         }
@@ -121,56 +139,82 @@ class ContactViewModel(
     fun deleteAllContacts() {
         viewModelScope.launch {
             contactRepository.deleteAllContacts()
+            loadSize.value = 20
+            refreshContact()
         }
     }
 
-    fun insertMockContact(context: Context) {
+    fun deleteAllMessages() {
         viewModelScope.launch {
-            val imageStorageManager: ImageStorageManager = ImageStorageManager(context)
-            val jsonString = context.assets.open("mock_data/mock_contacts.json").bufferedReader().use { it.readText() }
-            val mockContacts = Json.decodeFromString<List<MockContact>>(jsonString)
-            val contacts = mockContacts.map { mock ->
-                val imagePath = try {
-                    val inputStream = context.assets.open("mock_data/mock_avatars/avatar_${mock.contactId}.jpg")
-                    val bitmap = BitmapFactory.decodeStream(inputStream)
-                    imageStorageManager.saveContactImage(bitmap, mock.contactId)
-                } catch (e: Exception) {
-                    Log.e("AppDataContainer", "Failed to load avatar for ${mock.contactId}", e)
-                    ""
-                }
-                ContactEntity(
-                    contactId = mock.contactId,
-                    contactName = mock.contactName,
-                    contactSureName = mock.contactSureName ?: "",
-                    contactAvatar = imagePath,
-                    isFromSystem = mock.isFromSystem,
-                    previewText = mock.previewText,
-                    timestamp = System.currentTimeMillis() - mock.timestamp,
-                    unReadNum = mock.unReadNum
-                )
-            }
-            contactRepository.insertContacts(contacts)
+            messageRepository.deleteAllMessages()
+            Log.d("ConversationViewModel", "delete all messages")
+            refreshContact()
         }
     }
-    
-    fun insertMockConversation(context: Context) {
+
+    fun setViewingStatus(contactId: Int, isViewing: Boolean) {
+        if (isViewing) {
+            viewModelScope.launch {
+                contactRepository.setCurrentViewingId(contactId)
+                contactRepository.markAsRead(contactId)
+            }
+        } else {
+            contactRepository.setCurrentViewingId(null)
+        }
+    }
+
+    fun insertMockData(context: Context) {
         viewModelScope.launch {
-            val jsonString = context.assets.open("mock_data/mock_messages.json").bufferedReader().use { it.readText() }
+            val nowTimestamp = System.currentTimeMillis()
+            val jsonString =
+                context.assets.open("mock_data/mock_messages.json").bufferedReader()
+                    .use { it.readText() }
             val mockMessages = Json.decodeFromString<List<MockMessage>>(jsonString)
-            val messages = mockMessages.map { mock ->
+            val messages = mockMessages.map { message ->
                 MessageEntity(
-                    conversationId = mock.conversationId,
-                    senderName = mock.senderName,
-                    receiverName = mock.receiverName,
-                    messageText = mock.messageText,
-                    timestamp = System.currentTimeMillis() - mock.timestampOffset,
+                    conversationId = message.conversationId,
+                    senderId = message.senderId,
+                    receiverId = message.receiverId,
+                    messageText = message.messageText,
+                    timestamp = nowTimestamp - message.timestampOffset,
                 )
             }
             messageRepository.insertMessages(messages)
+
+            val imageStorageManager: ImageStorageManager = ImageStorageManager(context)
+            val contacts = mockMessages.map { message ->
+                val imagePath = try {
+                    val inputStream =
+                        context.assets.open("mock_data/mock_avatars/avatar_${message.conversationId - 1}.jpg")
+                    val bitmap = BitmapFactory.decodeStream(inputStream)
+                    imageStorageManager.saveContactImage(bitmap, message.conversationId)
+                } catch (e: Exception) {
+                    Log.e(
+                        "AppDataContainer",
+                        "Failed to load avatar for ${message.conversationId}",
+                        e
+                    )
+                    ""
+                }
+                ContactEntity(
+                    contactId = message.conversationId,
+                    contactName = message.contactName,
+                    contactSureName = "",
+                    contactAvatar = imagePath,
+                    isFromSystem = message.isFromSystem,
+                    previewText = message.messageText,
+                    timestamp = nowTimestamp - message.timestampOffset,
+                    unReadNum = 0
+                )
+            }
+            contactRepository.insertContacts(contacts)
+            contactRepository.deleteContact(90)
+            contactRepository.deleteContact(91)
+            contactRepository.deleteContact(92)
+            contactRepository.deleteContact(93)
         }
     }
 }
-
 
 
 class ImageStorageManager(private val context: Context) {
@@ -187,7 +231,6 @@ class ImageStorageManager(private val context: Context) {
         FileOutputStream(imageFile).use { outputStream ->
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
         }
-
         return imageFile.absolutePath
     }
 }

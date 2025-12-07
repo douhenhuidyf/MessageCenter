@@ -1,44 +1,36 @@
 package com.example.messagecenter.ui.screen
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.input.TextFieldLineLimits
-import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -50,23 +42,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import com.example.messagecenter.data.AppViewModelProvider
-import com.example.messagecenter.data.viewmodel.ContactViewModel
+import com.example.messagecenter.R
+import kotlinx.coroutines.delay
 
+import com.example.messagecenter.data.AppViewModelProvider
+import com.example.messagecenter.data.viewmodel.ContactDetailViewModel
 import com.example.messagecenter.ui.component.Avatar
 import com.example.messagecenter.ui.component.ContactSettingCell
 import com.example.messagecenter.ui.theme.MessageCenterTheme
-import com.example.messagecenter.data.viewmodel.ContactDetailViewModel
+import com.example.messagecenter.ui.component.TextBar
+import com.example.messagecenter.utils.BaseDialog
+import com.example.messagecenter.utils.PopPosition
 
 @Composable
 fun ContactScreen(
@@ -76,6 +70,7 @@ fun ContactScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    var showMoreSettings by rememberSaveable{ mutableStateOf(false) }
     var showSureNameEdit by rememberSaveable{ mutableStateOf(false) }
     val showName = if (uiState.contactSureName.isNullOrEmpty()){
         uiState.contactName
@@ -111,6 +106,7 @@ fun ContactScreen(
                 Icon(
                     imageVector = Icons.Default.Search,
                     contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
         }
@@ -137,19 +133,33 @@ fun ContactScreen(
                     .padding(top = 16.dp)
                     .fillMaxWidth()
             ) {
-                ContactSettingCell(icon = Icons.Default.Settings, text = "关注", onClick = {})
-                ContactSettingCell(icon = Icons.Default.Notifications, text = "免打扰", onClick = {})
+                ContactSettingCell(icon = Icons.Default.Favorite, text = stringResource(R.string.follow), onClick = {})
+                ContactSettingCell(icon = if (uiState.isMuted) Icons.Default.Lock else Icons.Default.Notifications, text = stringResource(R.string.mute), onClick = { viewModel.updateIsMuted(!uiState.isMuted) })
                 ContactSettingCell(
                     icon = Icons.Default.Settings,
-                    text = "更多设置",
+                    text = stringResource(R.string.more_settings),
                     onClick = {
-                        editedName = showName
-                        showSureNameEdit = true
-
+                        showMoreSettings = true
                     }
                 )
             }
         }
+
+        if (showMoreSettings) {
+            SettingsDialog(
+                isPinned = uiState.isPinned,
+                isMuted = uiState.isMuted,
+                onPinChange = { viewModel.updateIsPinned(it) },
+                onMuteChange = { viewModel.updateIsMuted(it) },
+                onEditSureNameClick = {
+                    showMoreSettings = false
+                    editedName = showName
+                    showSureNameEdit = true
+                },
+                onDismiss = { showMoreSettings = false }
+            )
+        }
+
         if (showSureNameEdit) {
             EditSureNameDialog(
                 editedName = editedName,
@@ -168,6 +178,59 @@ fun ContactScreen(
 }
 
 @Composable
+fun SettingsDialog(
+    isPinned: Boolean,
+    isMuted: Boolean,
+    onPinChange: (Boolean) -> Unit,
+    onMuteChange: (Boolean) -> Unit,
+    onEditSureNameClick: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    BaseDialog(
+        onDismissRequest = onDismiss,
+        position = PopPosition.BOTTOM
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
+                .padding(bottom = 8.dp),
+            shape = RoundedCornerShape(18.dp),
+            color = MaterialTheme.colorScheme.secondaryContainer
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp)
+            ) {
+                BaseSettingSell(
+                    text = stringResource(R.string.edit_sure_name),
+                    icon = Icons.Default.Edit,
+                    type = "nav",
+                    conClick = onEditSureNameClick
+                )
+                HorizontalDivider()
+                SwitchSettingSell(
+                    text = stringResource(R.string.pin_chat),
+                    icon = Icons.Default.Star,
+                    checked = isPinned,
+                    onFalse = { onPinChange(false) },
+                    onTrue = { onPinChange(true) }
+                )
+                HorizontalDivider()
+                SwitchSettingSell(
+                    text = stringResource(R.string.mute),
+                    icon = Icons.Default.Notifications,
+                    checked = isMuted,
+                    onTrue = { onMuteChange(true) },
+                    onFalse = { onMuteChange(false) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun EditSureNameDialog(
     editedName: String,
     onNameChange: (String) -> Unit,
@@ -175,21 +238,23 @@ fun EditSureNameDialog(
     onEditCancel: () -> Unit,
     modifier: Modifier = Modifier
 ){
-    val contactSureNameState = rememberTextFieldState(initialText = "备注")
     val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
+        delay(100)
+        keyboardController?.show()
     }
 
     Dialog(onDismissRequest = onEditCancel){
         Card(
             modifier = Modifier
                 .height(150.dp)
-                .width(350.dp),
+                .width(250.dp),
             shape = RoundedCornerShape(8.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primary
+                containerColor = MaterialTheme.colorScheme.secondaryContainer
             )
         ) {
             Column(
@@ -198,45 +263,23 @@ fun EditSureNameDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "请输入备注",
-                    style = MaterialTheme.typography.displayMedium,
+                    text = stringResource(R.string.edit_sure_name_prompt),
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                     modifier = Modifier.padding(top = 8.dp)
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                TextField(
-                    value = editedName,
-                    onValueChange = onNameChange,
-                    modifier = Modifier
-                        .width(250.dp)
-                        .height(50.dp)
-                        .focusRequester(focusRequester),
-                    textStyle = MaterialTheme.typography.bodyMedium,
-                    singleLine = true,
-                    shape = RoundedCornerShape(15.dp),
-
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        focusedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent,
-                        cursorColor = MaterialTheme.colorScheme.onSecondaryContainer
-                    ),
-                    trailingIcon = {
-                        if (editedName.isNotEmpty()) {
-                            IconButton(onClick = { onNameChange("") }) {
-                                Icon(
-                                    imageVector = Icons.Default.Clear,
-                                    contentDescription = "Clear text",
-                                    tint = Color.Gray
-                                )
-                            }
-                        }
-                    }
+                Spacer(modifier = Modifier.height(16.dp))
+                TextBar(
+                    inputText = editedName,
+                    onValueChange = {
+                        onNameChange(it)
+                    },
+                    promptText = "",
+                    imeAction = ImeAction.Done,
+                    focusRequester = focusRequester,
+                    modifier = Modifier.width(200.dp)
                 )
+                Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth(),
@@ -246,7 +289,7 @@ fun EditSureNameDialog(
                         onClick = { onEditCancel() },
                     ) {
                         Text(
-                            text = "取消",
+                            text = stringResource(R.string.cancel),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
@@ -255,7 +298,7 @@ fun EditSureNameDialog(
                         onClick = { onEditConfirm() },
                     ) {
                         Text(
-                            text="确认",
+                            text= stringResource(R.string.confirm),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
@@ -264,7 +307,6 @@ fun EditSureNameDialog(
             }
         }
     }
-
 }
 
 

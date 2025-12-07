@@ -20,7 +20,7 @@ val HanSansTypography = Typography(
     displayMedium = TextStyle(
         fontFamily = HanSans,
         fontWeight = FontWeight.Bold,
-        fontSize = 16.sp
+        fontSize = 18.sp
     ),
     bodyLarge = TextStyle(
         fontFamily = HanSans,

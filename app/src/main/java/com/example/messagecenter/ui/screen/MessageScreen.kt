@@ -7,7 +7,6 @@
 package com.example.messagecenter.ui.screen
 
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,11 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,40 +25,32 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 import com.example.messagecenter.data.repository.ContactEntity
 import com.example.messagecenter.data.viewmodel.ContactViewModel
-import com.example.messagecenter.data.viewmodel.MessageUiState
-import com.example.messagecenter.data.AppViewModelProvider
 import com.example.messagecenter.ui.component.MessagePageTopBar
 import com.example.messagecenter.ui.component.MessagePreviewCell
 
 @Composable
 fun MessageScreen(
+    listState: LazyListState,
     navController: NavController,
     modifier: Modifier = Modifier,
     availableContacts: List<ContactEntity>,
     availableHasMore: Boolean,
+    isNetworkAvailable: Boolean = true,
+    onShowNoNetworkDialog: () -> Unit = {},
     viewModel: ContactViewModel
 ) {
-    val listState = rememberLazyListState()
-
-    SideEffect {
-        Log.d("RecompositionTracker", "MessageScreen 重组了一次")
-    }
-
     Scaffold(
         topBar = { MessagePageTopBar(navController) },
         modifier = modifier
@@ -79,26 +68,10 @@ fun MessageScreen(
                 loadMore = viewModel::loadMoreContact,
                 refresh = viewModel::refreshContact,
                 markAsRead = viewModel::markAsRead,
-                deleteContact = viewModel::deleteContact
+                deleteContact = viewModel::deleteContact,
+                isNetworkAvailable = isNetworkAvailable,
+                onShowNoNetworkDialog = onShowNoNetworkDialog
             )
-//            when (uiState) {
-//                is MessageUiState.Loading -> {
-//                    Toast.makeText(
-//                        LocalContext.current,
-//                        "Loading...",
-//                        Toast.LENGTH_SHORT
-//                    ).show()
-//                }
-//                is MessageUiState.Error -> {
-//                    val errorState = uiState as MessageUiState.Error
-//                    Toast.makeText(
-//                        LocalContext.current,
-//                        "Error: ${errorState.exception.message}",
-//                        Toast.LENGTH_SHORT
-//                    ).show()
-//                }
-//                else -> {}
-//            }
         }
     }
 }
@@ -114,7 +87,9 @@ fun MessagePreviewFlow(
     loadMore: () -> Unit,
     refresh: () -> Unit,
     markAsRead:  (Int) -> Unit,
-    deleteContact: (Int) -> Unit
+    deleteContact: (Int) -> Unit,
+    isNetworkAvailable: Boolean = true,
+    onShowNoNetworkDialog: () -> Unit = {}
 ){
     var refreshing by remember {
         mutableStateOf(false)
@@ -125,11 +100,16 @@ fun MessagePreviewFlow(
     PullToRefreshBox(
         isRefreshing = refreshing,
         onRefresh = {
-            scope.launch {
-                refreshing = true
-                refresh()
-                delay(350)
+            if (!isNetworkAvailable) {
                 refreshing = false
+                onShowNoNetworkDialog()
+            } else {
+                scope.launch {
+                    refreshing = true
+                    refresh()
+                    delay(350)
+                    refreshing = false
+                }
             }
         },
         modifier = modifier
@@ -174,7 +154,8 @@ fun MessagePreviewFlow(
                     markAsRead = { markAsRead(contact.contactId) },
                     deleteContact = { deleteContact(contact.contactId) },
                     navController = navController,
-                    contactEntity = contact
+                    contactEntity = contact,
+                    highlightText = ""
                 )
             }
         }

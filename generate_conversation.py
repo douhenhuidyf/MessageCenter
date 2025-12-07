@@ -24,36 +24,67 @@ if __name__ == "__main__":
 
     num_contacts = len(contacts)
     conversations = []
-    for contact in contacts:
+    for idx, contact in enumerate(contacts):
         for l, r in zip(time_offset, time_offset[1:]):
-            for _ in range(2):
-                timestamp_offset = int(random.randint(l, r - 1))
-                days = timestamp_offset / 1000 // (24 * 3600)
-                remaining = timestamp_offset / 1000 % (24 * 3600)
-                hours = remaining // 3600
-                remaining %= 3600
-                minutes = remaining // 60
-                seconds = remaining % 60
+            timestamp_offset = int(random.randint(l, r - 1)) + 1000 * 60 * idx * 60
+            days = timestamp_offset / 1000 // (24 * 3600)
+            remaining = timestamp_offset / 1000 % (24 * 3600)
+            hours = remaining // 3600
+            remaining %= 3600
+            minutes = remaining // 60
+            seconds = remaining % 60
 
-                time_offset_string = ""
-                if days > 0:
-                    time_offset_string += f"{days:.0f}d "
-                if hours > 0:
-                    time_offset_string += f"{hours:.0f}h "
-                if minutes > 0:
-                    time_offset_string += f"{minutes:.0f}m "
-                if seconds > 0:
-                    time_offset_string += f"{seconds:.0f}s"
+            time_offset_string = ""
+            if days > 0:
+                time_offset_string += f"{days:.0f}d "
+            if hours > 0:
+                time_offset_string += f"{hours:.0f}h "
+            if minutes > 0:
+                time_offset_string += f"{minutes:.0f}m "
+            if seconds > 0:
+                time_offset_string += f"{seconds:.0f}s"
 
-                conversation = {
-                    "conversationId": contact["contactId"],
-                    "senderName": contact["contactName"],
-                    "receiverName": "USER",
-                    "messageText":
-                    f"Message from {contact['contactName']} to you before {time_offset_string}! Message from {contact['contactName']} to you before {time_offset_string}!",
-                    "timestampOffset": timestamp_offset
-                }
-                conversations.append(conversation)
+            conversation = {
+                "conversationId": contact["contactId"] + 1,
+                "contactName": contact["contactName"],
+                "isFromSystem": False,
+                "senderId": contact["contactId"] + 1,
+                "receiverId": 0,
+                "messageText":
+                f"Message from {contact['contactName']} to you before {time_offset_string}! Message from {contact['contactName']} to you before {time_offset_string}!",
+                "timestampOffset": timestamp_offset
+            }
+            conversations.append(conversation)
+
+            timestamp_offset = int(random.randint(l, r - 1)) + 1000 * 60 * idx * 60
+            days = timestamp_offset / 1000 // (24 * 3600)
+            remaining = timestamp_offset / 1000 % (24 * 3600)
+            hours = remaining // 3600
+            remaining %= 3600
+            minutes = remaining // 60
+            seconds = remaining % 60
+
+            time_offset_string = ""
+            if days > 0:
+                time_offset_string += f"{days:.0f}d "
+            if hours > 0:
+                time_offset_string += f"{hours:.0f}h "
+            if minutes > 0:
+                time_offset_string += f"{minutes:.0f}m "
+            if seconds > 0:
+                time_offset_string += f"{seconds:.0f}s"
+
+            conversation = {
+                "conversationId": contact["contactId"] + 1,
+                "contactName": contact["contactName"],
+                "isFromSystem": False,
+                "senderId": 0,
+                "receiverId": contact["contactId"] + 1,
+                "messageText":
+                f"我在{time_offset_string}前发给{contact['contactName']}的消息！我在{time_offset_string}前发给{contact['contactName']}的消息！",
+                "timestampOffset": timestamp_offset
+            }
+            conversations.append(conversation)
 
     with open(os.path.join(mock_data_dir, "mock_messages.json"),
               "w",

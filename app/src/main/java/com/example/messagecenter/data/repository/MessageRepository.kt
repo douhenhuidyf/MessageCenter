@@ -17,11 +17,19 @@ data class  MessageEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val conversationId : Int,
-    val senderName: String,
-    val receiverName: String,
+    val senderId: Int,
+    val receiverId: Int,
     val messageText: String,
     val timestamp: Long,
-)
+    val msgType: Int = TYPE_TEXT,
+    val extraData: String? = null
+){
+    companion object {
+        const val TYPE_TEXT = 0
+        const val TYPE_IMAGE = 1
+        const val TYPE_OPERATION = 2
+    }
+}
 
 @Dao
 interface MessageEntityDao{
@@ -40,27 +48,16 @@ interface MessageEntityDao{
     @Query("DELETE FROM messages WHERE conversationId = :conversationId")
     suspend fun deleteConversation(conversationId: Int)
 
+    @Query("DELETE FROM messages")
+    suspend fun deleteAllMessages()
+
     @Query("SELECT * FROM messages WHERE messageText LIKE '%' || :query || '%' ORDER BY timestamp DESC LIMIT :limit")
     suspend fun searchMessages(query: String, limit: Int): List<MessageEntity>
+
+    @Query("SELECT COUNT(*) FROM messages")
+    fun getTotalMessageCount(): Flow<Int>
 }
 
-@Database(entities = [MessageEntity::class], version = 1, exportSchema = false)
-abstract class MessagesDatabase : RoomDatabase() {
-    abstract fun messageEntityDao(): MessageEntityDao
-
-    companion object {
-        @Volatile
-        private var Instance: MessagesDatabase? = null
-
-        fun getDatabase(context: Context): MessagesDatabase {
-            return Instance ?: synchronized(this) {
-                Room.databaseBuilder(context, MessagesDatabase::class.java, "messages_database")
-                    .build()
-                    .also { Instance = it }
-            }
-        }
-    }
-}
 
 class MessageRepository(
     private val messageEntityDao: MessageEntityDao,
@@ -85,7 +82,15 @@ class MessageRepository(
         messageEntityDao.deleteConversation(conversationId)
     }
 
+    suspend fun deleteAllMessages() {
+        messageEntityDao.deleteAllMessages()
+    }
+
     suspend fun searchMessages(query: String, limit: Int): List<MessageEntity> {
         return messageEntityDao.searchMessages(query, limit)
+    }
+
+    fun getTotalMessageCountFlow(): Flow<Int> {
+        return messageEntityDao.getTotalMessageCount()
     }
 }

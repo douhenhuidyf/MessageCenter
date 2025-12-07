@@ -1,0 +1,66 @@
+<resources>
+    <string name="app_name">消息中心</string>
+
+    <string name="confirm">确认</string>
+    <string name="cancel">取消</string>
+
+    <string name="settings">设置</string>
+    <string name="user_settings">用户设置</string>
+    <string name="language">语言</string>
+    <string name="theme_mode">主题模式</string>
+    <string name="data_board">数据看板</string>
+    <string name="personal_data">个人数据</string>
+    <string name="background_records">后台记录</string>
+    <string name="test_settings">测试设置</string>
+    <string name="clear_records">清空记录</string>
+    <string name="inject_records">注入记录</string>
+    <string name="accept_new_messages">接收新消息</string>
+
+    <string name="choose_theme_mode">选择主题模式</string>
+    <string name="follow_system">跟随系统</string>
+    <string name="light_mode">浅色模式</string>
+    <string name="dark_mode">深色模式</string>
+
+    <string name="choose_language">选择语言</string>
+    <string name="simplified_chinese">简体中文</string>
+    <string name="english">English</string>
+
+    <string name="search_messages">搜索消息</string>
+    <string name="contacts">联系人</string>
+    <string name="message_record">消息</string>
+    <string name="messages_record">消息</string>
+    <string name="no_results_found">未找到相关结果</string>
+
+    <string name="home_screen">主页</string>
+
+    <string name="follow">关注</string>
+    <string name="mute">免打扰</string>
+    <string name="more_settings">更多设置</string>
+    <string name="pin_chat">置顶聊天</string>
+    <string name="edit_sure_name">修改备注</string>
+    <string name="edit_sure_name_prompt">请输入备注</string>
+
+    <string name="received_reward">已领取奖励</string>
+    <string name="view_detail">查看详情</string>
+
+    <string name="system_message">官方消息</string>
+    <string name="messages">条</string>
+
+    <string name="profile">我的</string>
+    <string name="conversation">会话</string>
+    <string name="contact">联系人</string>
+    <string name="search">搜索</string>
+
+    <string name="just_now">刚刚</string>
+    <string name="minutes_ago">分钟前</string>
+    <string name="hours_ago">小时前</string>
+    <string name="yesterday">昨天</string>
+    <string name="days_ago">天前</string>
+
+    <string name="no_network">您的设备未启用移动网络或无线局域网</string>
+    <string name="no_network_tip1">如需要连接到互联网，请参考以下几点：</string>
+    <string name="no_network_point1">1. 检查手机中的无线局域网设置，查看是否有可接入的无线局域网信号。</string>
+    <string name="no_network_point2">2. 检查手机是否已接入移动网络，并且手机没有被停机。</string>
+    <string name="no_network_tip2">如果您已接入无线局域网，请确保已连接到正确的网络。</string>
+    <string name="no_network_point3">3. 如果您已接入无线局域网，请确保已连接到正确的网络。</string>
+</resources>

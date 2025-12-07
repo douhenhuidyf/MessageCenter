@@ -1,6 +1,5 @@
 package com.example.messagecenter.data.viewmodel
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -74,6 +73,12 @@ class ConversationViewModel(
         Log.d("ConversationViewModel", "loadMore: loadSize=${loadSize.value}, total=${conversationSize.value}")
         if (loadSize.value < conversationSize.value) {
             loadSize.value += pageSize
+        }
+    }
+
+    fun insertMessage(message: MessageEntity) {
+        viewModelScope.launch {
+            messageRepository.insertMessage(message)
         }
     }
 

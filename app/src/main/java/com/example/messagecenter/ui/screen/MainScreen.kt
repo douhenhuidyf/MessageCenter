@@ -1,11 +1,14 @@
 package com.example.messagecenter.ui.screen
 
+import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -14,24 +17,32 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavController
-import com.example.messagecenter.data.repository.ContactEntity
+import com.example.messagecenter.R
+import kotlinx.coroutines.launch
 
+import com.example.messagecenter.data.repository.ContactEntity
 import com.example.messagecenter.data.viewmodel.ContactViewModel
 import com.example.messagecenter.data.viewmodel.MessageUiState
 import com.example.messagecenter.data.viewmodel.SettingsViewModel
 import com.example.messagecenter.navigation.Destination
+import com.example.messagecenter.utils.NetworkConnectivityObserver
+import com.example.messagecenter.utils.NoNetworkDialog
 
 
 @Composable
@@ -40,23 +51,57 @@ fun MainScreen(
     settingsViewModel: SettingsViewModel,
     navController: NavController
 ) {
+    val context = LocalContext.current
     var selectedDestination by rememberSaveable { mutableIntStateOf(0) }
 
-     val uiState by contactViewModel.uiState.collectAsState()
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
 
-     var availableContacts by remember { mutableStateOf<List<ContactEntity>>(emptyList()) }
-     var availableHasMore by remember { mutableStateOf(false) }
+    val uiState by contactViewModel.uiState.collectAsState()
+    var currentContacts by remember { mutableStateOf<List<ContactEntity>>(emptyList()) }
+    var currentHasMore by remember { mutableStateOf(false) }
 
-     if (uiState is MessageUiState.Success) {
-         val successState = uiState as MessageUiState.Success
-         availableContacts = successState.contacts
-         availableHasMore = successState.hasMore
-     }
-    else if (uiState is MessageUiState.Error && selectedDestination == 1) {
+    val isNetworkAvailable by produceState(initialValue = true) {
+        NetworkConnectivityObserver(context).observe().collect { value = it }
+    }
+    var showNoNetworkDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isNetworkAvailable) {
+        if (!isNetworkAvailable) {
+            showNoNetworkDialog = true
+        }
+    }
+    LaunchedEffect(uiState) {
+        val state = uiState
+        if (state is MessageUiState.Success) {
+            if (state.contacts.isNotEmpty()) {
+                if (state.contacts != currentContacts && listState.firstVisibleItemIndex == 0) {
+                    coroutineScope.launch {
+                        listState.animateScrollToItem(0)
+                    }
+                }
+                Log.d("uistate", "非空的")
+                currentContacts = state.contacts
+                currentHasMore = state.hasMore
+            } else {
+                if (selectedDestination == 1) {
+                    Toast.makeText(
+                        context,
+                        "当前没有消息记录",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                currentContacts = emptyList()
+                currentHasMore = false
+            }
+        }
+    }
+
+    if (uiState is MessageUiState.Error && selectedDestination == 1) {
         val errorState = uiState as MessageUiState.Error
         Toast.makeText(
-            LocalContext.current,
-            "Error: ${errorState.exception.message}",
+            context,
+            "${errorState.exception.message}",
             Toast.LENGTH_SHORT
         ).show()
     }
@@ -74,7 +119,7 @@ fun MainScreen(
                             contentDescription = Destination.HOME.contentDescription
                         )
                     },
-                    label = { Text(Destination.HOME.label) }
+                    label = { Text(stringResource(Destination.HOME.label)) }
                 )
                 NavigationBarItem(
                     selected = selectedDestination == 1,
@@ -85,7 +130,7 @@ fun MainScreen(
                             contentDescription = Destination.MESSAGE.contentDescription
                         )
                     },
-                    label = { Text(Destination.MESSAGE.label) }
+                    label = { Text(stringResource(Destination.MESSAGE.label)) }
                 )
                 NavigationBarItem(
                     selected = selectedDestination == 2,
@@ -96,7 +141,7 @@ fun MainScreen(
                             contentDescription = Destination.PROFILE.contentDescription
                         )
                     },
-                    label = { Text(Destination.PROFILE.label) }
+                    label = { Text(stringResource(Destination.PROFILE.label)) }
                 )
             }
         }
@@ -104,8 +149,25 @@ fun MainScreen(
         Box(modifier = Modifier.padding(bottom = contentPadding.calculateBottomPadding())) {
             when (selectedDestination) {
                 0 -> HomeScreen()
-                1 -> MessageScreen(navController, Modifier, availableContacts, availableHasMore, contactViewModel)
-                2 -> SettingScreen(settingsViewModel)
+                1 -> {
+                    MessageScreen(
+                        listState,
+                        navController,
+                        Modifier,
+                        currentContacts,
+                        currentHasMore,
+                        isNetworkAvailable = isNetworkAvailable,
+                        onShowNoNetworkDialog = { showNoNetworkDialog = true },
+                        contactViewModel
+                    )
+                }
+                2 -> SettingScreen(settingsViewModel, contactViewModel)
+            }
+            if(showNoNetworkDialog){
+                NoNetworkDialog(
+                    showNoNetworkDialog,
+                    onDismiss = { showNoNetworkDialog = false }
+                )
             }
         }
     }
@@ -118,8 +180,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        var showDialog by remember { mutableStateOf(false) }
         Text(
-            "Home screen",
+            text = stringResource(R.string.home_screen),
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.displayMedium,
             color = MaterialTheme.colorScheme.onPrimaryContainer
