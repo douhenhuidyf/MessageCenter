@@ -71,7 +71,7 @@ fun MainScreen(
             showNoNetworkDialog = true
         }
     }
-    LaunchedEffect(uiState) {
+    LaunchedEffect(uiState, selectedDestination) {
         val state = uiState
         if (state is MessageUiState.Success) {
             if (state.contacts.isNotEmpty()) {
