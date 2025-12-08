@@ -50,7 +50,7 @@ https://github.com/douhenhuidyf/MessageCenter
              <img src="images/mvvm.png" alt="无网-浅" width="700"/>
 ### 模块说明
 **1. UILayer(View):**
-   这是用户直接看到的UI层级，复制将数据展示给用户并响应用户操作。用户与UI交互时，UI向ViewModel发出用户相关事件，更新相关数据。UI层在本项目中包括：
+   这是用户直接看到的UI层级，负责将数据展示给用户并响应用户操作。用户与UI交互时，UI向ViewModel发出用户相关事件，更新相关数据。UI层在本项目中包括：
 - Screens:MessageScreen(消息列表)，ConversationScreen(会话页面)，SettingScreen(设置页面)等可使页面。
 - Components:包括不同页面内的可复用组件如MessageCell，SearchBar，TextField。
 - State:使用StateFlow和ComposeState管理UI状态，使得UI是数据状态的纯函数映射。
