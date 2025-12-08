@@ -1,7 +1,7 @@
-# MessageCenter-抖音增长客户端方向作业
+# MessageCenter:字节跳动工程训练营客户端方向作业
 ## 简介
-本项目是【抖音增长客户端方向训练营】的结业作业，实现了一个简版的抖音消息中心，包含消息列表展示、本地持久化存储、消息模拟分发、搜索及备注等功能。
-项目采用Kotlin语言开发，UI框架完全基于JetpackCompose，架构模式采用MVVM。
+本项目是`字节跳动工程训练营`客户端方向抖音增长部门的结业作业，实现了一个简版的抖音消息中心，包含消息列表展示、本地持久化存储、消息模拟分发、搜索及备注等功能。
+项目采用Kotlin语言开发，UI框架完全基于Jetpack Compose，架构模式采用MVVM。
 ## 产物地址
 https://github.com/douhenhuidyf/MessageCenter
 ## 开发环境
@@ -9,13 +9,14 @@ https://github.com/douhenhuidyf/MessageCenter
 - Language:Kotlin2.2.0
 - UIFramework:JetpackCompose(Material3)
 - BuildSystem:Gradle(KotlinDSL)
+- Andorid SDK:31~36
 ## 功能介绍
 ### 基础IM消息通讯
 1. 消息列表:
-- 展示联系人头像、昵称、最后一条消息预览及时间戳。
-- 实时显示未读消息红点（Badge），支持下拉刷新。
+- 展示联系人头像、昵称、置顶状态、最后一条消息预览及时间戳。
+- 实时显示未读消息红点，支持下拉刷新。
 2. 对话详情:
-- 多类型消息渲染:支持文本、图片、运营卡片（文本+按钮）三种消息类型。
+- 多类型消息渲染:支持文本、图片、运营卡片（文本+按钮）三种消息类型。图片使用图床url加载。
 - 消息发送:向联系人发送消息后，模拟用户发送返回文本。
 3. 全局搜索:
 - 支持对本地历史消息进行关键词检索。
@@ -74,7 +75,7 @@ https://github.com/douhenhuidyf/MessageCenter
 - 全应用采用Kotlin Coroutines异步处理耗时操作（IO 读写、数据库查询），避免阻塞主线程。
 - 使用StateFlow和SharedFlow在ViewModel和UI之间传递状态，确保遵循单向数据流模式。
 **3. 数据展示**
-- 联系人列表使用LazyColumn懒加载qq列表，分页加载联系人数据
+- 联系人列表使用LazyColumn懒加载列表，分页加载联系人数据
 - 图片使用Coil库异步加载图片
 - 使用Flow数据源，确保数据变换实时反应在UI层。
 ## 数据库设计与迁移方案
